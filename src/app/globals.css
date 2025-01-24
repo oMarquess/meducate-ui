@@ -1,0 +1,83 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Funnel+Display:wght@300..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=Vazirmatn:wght@100..900&display=swap');
+    
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components{
+    .btn{
+        @apply px-4 py-2 rounded-lg font-medium inline-flex items-center justify-center tracking-tight
+    }
+    .btn-primary{
+        @apply bg-black text-white;
+    }
+    .btn-text{
+        @apply text-black bg-transparent
+    }
+    .logo-ticker-image{
+        @apply h-8 w-auto;
+    }
+    .tag{
+        @apply text-sm inline-flex border border-[#222]/10 px-3 py-1 rounded-lg tracking-tighter
+    }
+    .section-title{
+        @apply text-center text-3xl md:text-[54px] md:leading-[60px] font-bold tracking-tighter bg-gradient-to-b from-black to-[#001E80] text-transparent bg-clip-text mt-5
+    }
+    .section-description{
+        @apply text-center text-[22px] leading-[60px] tracking-tight 
+    }
+}   .section-heading{
+    @apply max-w-[540px] mx-auto}
+    .card{
+        @apply p-10 border border-[#F1F1F1] rounded-3xl shadow-[0_7px_14px_#EAEAEA] max-w-xs w-full
+    }
+
+.fira-code-regular {
+    font-family: "Fira Code", monospace;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    }
+    
+    .fira-code-bold {
+    font-family: "Fira Code", monospace;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+    }
+.source-serif-4-regular {
+    font-family: "Source Serif 4", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    }
+    
+      .source-serif-4-bold {
+        font-family: "Source Serif 4", serif;
+        font-optical-sizing: auto;
+        font-weight: 700;
+        font-style: normal;
+      }
+      
+      .funnel-display-light {
+        font-family: "Funnel Display", serif;
+        font-optical-sizing: auto;
+        font-weight: 300;
+        font-style: normal;
+      }
+      
+      .funnel-display-bold {
+        font-family: "Funnel Display", serif;
+        font-optical-sizing: auto;
+        font-weight: 700;
+        font-style: normal;
+      }
+    
+      .select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M6.293 7.293a1 1 0 0 1 1.414 0L10 9.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        background-size: 1.25rem;
+      }
