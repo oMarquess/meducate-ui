@@ -1,5 +1,5 @@
 "use client";
-import productImage from "@/assets/product-image.png";
+import productImage from "@/assets/product-img.png";
 import Image from "next/image";
 import pyramidImage from "@/assets/pyramid.png";
 import tubeImage from "@/assets/tube.png";
