@@ -1,8 +1,9 @@
 "use client"
-import acmeLogo from '@/assets/logo-acme.png';
-import quantumLogo from'@/assets/logo-quantum.png';
-import echoLogo from '@/assets/logo-echo.png';
-import apexLogo from '@/assets/logo-apex.png';
+import acmeLogo from '@/assets/sg.jpg';
+import quantumLogo from'@/assets/black-in-ai.png';
+import echoLogo from '@/assets/UNICEF-Logo-1986.png';
+import apexLogo from '@/assets/Lancet-laboratories.jpg';
+import huggingface from '@/assets/hf-logo-with-title.png';
 import Image from 'next/image';
 import {motion} from "framer-motion";
 export const LogoTicker = () => {
@@ -13,16 +14,26 @@ export const LogoTicker = () => {
       <motion.div className='flex gap-14 flex-none pr-14' 
       animate={{translateX:"-50%"}}
       transition={{
-        duration:5,
+        duration:7,
         repeat:Infinity,
-        ease:"linear",
-        repeatType: "loop"
+        ease:"easeInOut",
+        repeatType: "mirror"
       }}>
         <Image src={acmeLogo} alt="Acme Logo" className='logo-ticker-image'  />
         <Image src={acmeLogo} alt="Acme Logo"  className='logo-ticker-image'/>
         <Image src={apexLogo} alt="Acme Logo"  className='logo-ticker-image'/>
         <Image src={quantumLogo} alt="Acme Logo"  className='logo-ticker-image'/>
         <Image src={acmeLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={echoLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={huggingface} alt="HuggingFace"  className='logo-ticker-image'/>
+
+
+        <Image src={acmeLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={apexLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={quantumLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={acmeLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={echoLogo} alt="Acme Logo"  className='logo-ticker-image'/>
+        <Image src={huggingface} alt="HuggingFace"  className='logo-ticker-image'/>
       </motion.div>
       </div>
     </div>
