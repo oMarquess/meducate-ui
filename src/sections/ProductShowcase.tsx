@@ -39,7 +39,7 @@ export const ProductShowcase = () => {
 
         <div className="relative">
           {/* Product Image */}
-          <Image src={productImage} alt="Product Image" className="mt-10" />
+          <Image src={productImage} alt="Product Image" className="mt-10 rounded-2xl shadow-2xl shadow-[#001E80]/20 border-2 border-[#001E80]/10 hover:scale-105 transition-transform duration-300" />
 
           {/* Wrap Pyramid Image in motion.div for animation */}
           <motion.div
