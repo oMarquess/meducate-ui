@@ -8,15 +8,15 @@ import { FileForm } from "./File";
 export function FormStep(){
     const {step} = useFormState();
     switch(step){
+        // case 1:
+        //     return <UsernameForm/>;
+        // case 2:
+        //     return <EmailForm/>;
         case 1:
-            return <UsernameForm/>;
-        case 2:
-            return <EmailForm/>;
-        case 3:
             return <EducationalForm/>;
-        case 4:
+        case 2:
             return <FileForm/>;
-        case 5:
+        case 3:
             return <TechnicalForm/>;
         default:
             return null;

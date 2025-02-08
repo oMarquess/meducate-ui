@@ -6,6 +6,7 @@ import glassImage from "@/assets/cylinder-1.png"
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import Link from "next/link";
 
 export const CallToAction = () => {
   const sectionRef = useRef(null);
@@ -45,11 +46,13 @@ export const CallToAction = () => {
         </div>
 
         <div className="flex gap-2 mt-10 justify-center">
+          <Link href="/sign-up">
           <button className="btn btn-primary">Sign Up</button>
-          <button className="btn btn-text gap-1">
+          </Link>
+          {/* <button className="btn btn-text gap-1">
             <span>Learn more</span>
             <ArrowRight className="h-5 w-5" />
-          </button>
+          </button> */}
         </div>
       </div>
     </section>
