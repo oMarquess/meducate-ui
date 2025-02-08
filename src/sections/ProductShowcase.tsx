@@ -25,16 +25,15 @@ export const ProductShowcase = () => {
       <div className="container">
         <div className="section-heading">
           <div className="flex justify-center">
-            <div className="tag">Boost productivity</div>
+            <div className="tag">Simplified Health Insights</div>
           </div>
           <h2 className="text-center text-3xl md:text-[54px] md:leading-[60px] font-bold tracking-tighter bg-gradient-to-b from-black to-[#001E80] text-transparent bg-clip-text mt-5">
-            A more effective way to track progress
+            No more guessing what your reports mean.
           </h2>
           <p className="text-center text-[22px] leading-[30px] tracking-tighter text-[#010d3e] mt-5">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta
-            explicabo nisi, distinctio officiis earum natus eos veritatis rem,
-            nesciunt illo alias, magnam adipisci eligendi assumenda animi.
-            Placeat exercitationem perferendis inventore!
+          Your health is unique, and so are your reports. 
+          Our app provides personalized insights based on your medical history, age, gender, and lifestyle. 
+          Get actionable recommendations to improve your health and well-being.
           </p>
         </div>
 
