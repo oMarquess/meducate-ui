@@ -27,7 +27,9 @@ export const Hero = () => {
 
      
       <div className="md:w-[478px]">
-        <div className="text-sm inline-flex border border-[#222]/10 px-3 py-1 rounded-lg tracking-tighter">Version 2.0 is coming</div>
+        <div className="inline-flex border border-[#222]/10 px-3 py-1 rounded-lg tracking-tighter bg-gradient-to-r from-[#EAEEFE] to-[#D2DCFF] shadow-sm text-[#001E80] font-medium">
+          Version 2.0 is coming
+        </div>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mt-6">
           Medical Reports Made{' '}
           <span className="bg-gradient-to-r from-[#e0e2e8] to-[#EAEEFE] text-transparent bg-clip-text">
@@ -38,15 +40,27 @@ export const Hero = () => {
         Upload any medical report and get instant, easy-to-understand explanations. 
         Your personal medical translator is just one click away.
         </p>
-      
       <div className="flex gap-1 items-center mt-[30px]">
-      <Link href="/sign-in">
-      <button className="btn btn-primary"> Get started </button>
-      </Link>
-      <button className="btn btn-text gap-1">
-         Learn More 
-         <ArrowIcon className="h-5 w-5" />
-      </button>
+        
+        <motion.div
+          className="flex items-center gap-1"
+          animate={{
+            x: [0, 10, 0],
+          }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "mirror",
+            duration: 1.5,
+            ease: "easeInOut",
+          }}
+        >
+          {/* <ArrowIcon className="h-5 w-5" /> */}
+          <Link href="/sign-in">
+          <button className="btn btn-primary">Get started</button>
+        </Link>
+        </motion.div>
+        
+     
       </div>
     </div>
    
