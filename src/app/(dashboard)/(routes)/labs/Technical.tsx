@@ -6,6 +6,13 @@ import axios from 'axios';
 import { ProgressBar } from './ProgressBar';
 import { API_ENDPOINT } from "@/config";
 import { useRouter } from 'next/navigation';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from "@/components/ui/accordion";
+  
 
 type TFormValues = {
        technicalLevel: string;
@@ -40,8 +47,16 @@ function InterpretationResult({ response }: { response: InterpretationResponse }
         <div className="bg-white shadow-lg rounded-lg p-6 mt-8">
             <h2 className="text-2xl font-bold mb-4">Interpretation Result</h2>
             <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Summary</h3>
-                <p className="text-gray-700">{response.interpretation.summary}</p>
+            <Accordion type="single" collapsible className="w-full">
+      <AccordionItem value="item-1">
+        <AccordionTrigger>Summary</AccordionTrigger>
+        <AccordionContent>
+        {response.interpretation.summary}
+        </AccordionContent>
+      </AccordionItem>  
+    </Accordion>
+                {/* <h3 className="text-xl font-semibold mb-2">Summary</h3>
+                <p className="text-gray-700">{response.interpretation.summary}</p> */}
             </div>
             <div className="mb-6">
                 <h3 className="text-xl font-semibold mb-2">Key Findings</h3>

@@ -6,6 +6,14 @@ import axios from 'axios';
 import { ProgressBar } from './ProgressBar';
 import { API_ENDPOINT } from "@/config";
 import { useRouter } from 'next/navigation';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from "@/components/ui/accordion";
+  
+
 
 type TFormValues = {
     technicalLevel: string;
@@ -40,34 +48,58 @@ function InterpretationResult({ response }: { response: InterpretationResponse }
         <div className="bg-white shadow-lg rounded-lg p-6 mt-8">
             <h2 className="text-2xl font-bold mb-4">Interpretation Result</h2>
             <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Summary</h3>
-                <p className="text-gray-700">{response.interpretation.summary}</p>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>Summary</AccordionTrigger>
+                        <AccordionContent>
+                            {response.interpretation.summary}
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </div>
             <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Key Findings</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                    {response.interpretation.key_findings.map((finding, index) => (
-                        <li key={index} className="text-gray-700">{finding}</li>
-                    ))}
-                </ul>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger>Key Findings</AccordionTrigger>
+                        <AccordionContent>
+                            <ul className="list-disc pl-5 space-y-2">
+                                {response.interpretation.key_findings.map((finding, index) => (
+                                    <li key={index} className="text-gray-700">{finding}</li>
+                                ))}
+                            </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </div>
             <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Recommendations</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                    {response.interpretation.recommendations.map((recommendation, index) => (
-                        <li key={index} className="text-gray-700">{recommendation}</li>
-                    ))}
-                </ul>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger>Recommendations</AccordionTrigger>
+                        <AccordionContent>
+                            <ul className="list-disc pl-5 space-y-2">
+                                {response.interpretation.recommendations.map((recommendation, index) => (
+                                    <li key={index} className="text-gray-700">{recommendation}</li>
+                                ))}
+                            </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </div>
             <div>
-                <h3 className="text-xl font-semibold mb-2">Medical Terms</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                    {Object.entries(response.interpretation.medical_terms).map(([term, definition], index) => (
-                        <li key={index} className="text-gray-700">
-                            <span className="font-semibold">{term}:</span> {definition}
-                        </li>
-                    ))}
-                </ul>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-4">
+                        <AccordionTrigger>Medical Terms</AccordionTrigger>
+                        <AccordionContent>
+                            <ul className="list-disc pl-5 space-y-2">
+                                {Object.entries(response.interpretation.medical_terms).map(([term, definition], index) => (
+                                    <li key={index} className="text-gray-700">
+                                        <span className="font-semibold">{term}:</span> {definition}
+                                    </li>
+                                ))}
+                            </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </div>
             <button
                 type="button"
