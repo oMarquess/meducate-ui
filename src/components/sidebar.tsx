@@ -44,27 +44,22 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
 
     return (
         <>
-            {/* Hamburger Menu Button */}
             <button
                 className="fixed top-4 left-4 z-50 md:hidden p-2 bg-gray-900 rounded-lg"
                 onClick={toggleSidebar}
             >
                 {isOpen ? (
-                    <X className="h-6 w-6 text-black" />
+                    <X className="h-6 w-6 text-white" />
                 ) : (
-                    <Menu className="h-6 w-6 text-black" />
+                    <Menu className="h-6 w-6 text-white" />
                 )}
-                
             </button>
-            {/* <div className="md:hidden fixed top-4 left-4 z-50">
-            <MobileSidebar apiLimitCount={apiLimitCount} isPro={isPro} />
-            </div> */}
-            {/* Sidebar */}
+
             <div
                 className={cn(
                     "fixed inset-y-0 left-0 z-40 w-64 bg-[#111827] text-white transition-transform duration-300 ease-in-out transform",
                     isOpen ? "translate-x-0" : "-translate-x-full",
-                    "md:translate-x-0" // Always visible on medium and larger screens
+                    "md:translate-x-0" 
                 )}
             >
                 <div className="space-y-4 py-4 flex flex-col h-full">
