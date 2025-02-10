@@ -52,7 +52,10 @@ export const Footer = () => {
       </nav>
       <div className="flex justify-center gap-6 mt-6">
       <SocialInsta/>
+      <a href="https://www.linkedin.com/company/meducate-ai" target="_blank" rel="noopener noreferrer">
       <SocialLinked/>
+      </a>
+      
       <SocialPin />
       <SocialYoutube/>
       <SocialX/>
