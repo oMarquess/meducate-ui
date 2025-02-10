@@ -2,6 +2,7 @@
 import { useForm } from "react-hook-form";
 import { useFormState } from "./FormContext";
 import { useState } from "react";
+import { useEffect } from "react";
 import axios from 'axios';
 import { ProgressBar } from './ProgressBar';
 import { API_ENDPOINT } from "@/config";
@@ -47,60 +48,68 @@ function InterpretationResult({ response }: { response: InterpretationResponse }
     return (
         <div className="bg-white shadow-lg rounded-lg p-6 mt-8">
             <h2 className="text-2xl font-bold mb-4">Interpretation Result</h2>
-            <div className="mb-6">
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>Summary</AccordionTrigger>
-                        <AccordionContent>
-                            {response.interpretation.summary}
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </div>
-            <div className="mb-6">
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger>Key Findings</AccordionTrigger>
-                        <AccordionContent>
-                            <ul className="list-disc pl-5 space-y-2">
-                                {response.interpretation.key_findings.map((finding, index) => (
-                                    <li key={index} className="text-gray-700">{finding}</li>
-                                ))}
-                            </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </div>
-            <div className="mb-6">
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-3">
-                        <AccordionTrigger>Recommendations</AccordionTrigger>
-                        <AccordionContent>
-                            <ul className="list-disc pl-5 space-y-2">
-                                {response.interpretation.recommendations.map((recommendation, index) => (
-                                    <li key={index} className="text-gray-700">{recommendation}</li>
-                                ))}
-                            </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </div>
-            <div>
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-4">
-                        <AccordionTrigger>Medical Terms</AccordionTrigger>
-                        <AccordionContent>
-                            <ul className="list-disc pl-5 space-y-2">
-                                {Object.entries(response.interpretation.medical_terms).map(([term, definition], index) => (
-                                    <li key={index} className="text-gray-700">
-                                        <span className="font-semibold">{term}:</span> {definition}
-                                    </li>
-                                ))}
-                            </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </div>
+            {response.interpretation.summary && (
+                <div className="mb-6">
+                    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                        <AccordionItem value="item-1">
+                            <AccordionTrigger>Summary</AccordionTrigger>
+                            <AccordionContent className="data-[state=open]:animate-slideDown">
+                                {response.interpretation.summary}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            )}
+            {response.interpretation.key_findings && response.interpretation.key_findings.length > 0 && (
+                <div className="mb-6">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-2">
+                            <AccordionTrigger>Key Findings</AccordionTrigger>
+                            <AccordionContent className="data-[state=open]:animate-slideDown">
+                                <ul className="list-disc pl-5 space-y-2">
+                                    {response.interpretation.key_findings.map((finding, index) => (
+                                        <li key={index} className="text-gray-700">{finding}</li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            )}
+            {response.interpretation.recommendations && response.interpretation.recommendations.length > 0 && (
+                <div className="mb-6">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-3">
+                            <AccordionTrigger>Recommendations</AccordionTrigger>
+                            <AccordionContent>
+                                <ul className="list-disc pl-5 space-y-2">
+                                    {response.interpretation.recommendations.map((recommendation, index) => (
+                                        <li key={index} className="text-gray-700">{recommendation}</li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            )}
+            {Object.keys(response.interpretation.medical_terms).length > 0 && (
+                <div>
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-4">
+                            <AccordionTrigger>Medical Terms</AccordionTrigger>
+                            <AccordionContent>
+                                <ul className="list-disc pl-5 space-y-2">
+                                    {Object.entries(response.interpretation.medical_terms).map(([term, definition], index) => (
+                                        <li key={index} className="text-gray-700">
+                                            <span className="font-semibold">{term}:</span> {definition}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            )}
             <button
                 type="button"
                 onClick={handleReturnToHome}
@@ -120,6 +129,18 @@ export function TechnicalForm() {
         defaultValues: formData
     });
     const router = useRouter();
+    //comment out to reveal the right click
+    useEffect(() => {
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
+        document.addEventListener("contextmenu", handleContextMenu);
+
+        return () => {
+            document.removeEventListener("contextmenu", handleContextMenu);
+        };
+    }, []);
 
     async function onHandleFormSubmit(data: TFormValues) {
         setFormData((prevFormData) => ({ ...prevFormData, ...data }));
@@ -151,9 +172,10 @@ export function TechnicalForm() {
         } catch (error) {
             console.error('Error sending data to backend:', error);
             // Handle error state or display error message to the user
+            alert('An error occurred. Please try again.');
+            router.back();
         } finally {
             setIsLoading(false);
-            router.refresh();
         }
     }
 
@@ -164,7 +186,8 @@ export function TechnicalForm() {
             </div>
         ) : isLoading ? (
             <div>
-                <h1>Loading...</h1>
+                <h1>Interpreting ...</h1>
+                <br/>
                 <ProgressBar />
             </div>
         ) : (
