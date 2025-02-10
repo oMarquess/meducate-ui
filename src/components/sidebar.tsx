@@ -6,6 +6,7 @@ import { Montserrat } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Logo from '@/assets/logosaas.png';
 import { useState } from "react";
+// import {MobileSidebar} from "./mobile-sidebar";
 
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, StethoscopeIcon, Menu, X } from "lucide-react";
@@ -43,7 +44,6 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
 
     return (
         <>
-            {/* Hamburger Menu Button */}
             <button
                 className="fixed top-4 left-4 z-50 md:hidden p-2 bg-gray-900 rounded-lg"
                 onClick={toggleSidebar}
@@ -55,12 +55,11 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                 )}
             </button>
 
-            {/* Sidebar */}
             <div
                 className={cn(
                     "fixed inset-y-0 left-0 z-40 w-64 bg-[#111827] text-white transition-transform duration-300 ease-in-out transform",
                     isOpen ? "translate-x-0" : "-translate-x-full",
-                    "md:translate-x-0" // Always visible on medium and larger screens
+                    "md:translate-x-0" 
                 )}
             >
                 <div className="space-y-4 py-4 flex flex-col h-full">
