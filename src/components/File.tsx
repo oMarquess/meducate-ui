@@ -3,6 +3,8 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useFormState } from "./FormContext";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
 export function FileForm() {
     const { onHandleNext, onHandleBack, setFormData } = useFormState();
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -11,22 +13,29 @@ export function FileForm() {
 
     // Handle file drop
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        setFormData((prevFormData) => ({ ...prevFormData, files: acceptedFiles }));
-        setUploadedFiles(acceptedFiles);
-        setUploadProgress(0);
-        setError(null); // Clear error when files are uploaded
+        const validFiles = acceptedFiles.filter((file) => file.size <= MAX_FILE_SIZE);
+        const invalidFiles = acceptedFiles.filter((file) => file.size > MAX_FILE_SIZE);
 
-        // Simulate upload progress
-        const interval = setInterval(() => {
-            setUploadProgress((prevProgress) => {
-                const newProgress = prevProgress + 10;
-                if (newProgress >= 100) {
-                    clearInterval(interval);
-                    return 100;
-                }
-                return newProgress;
-            });
-        }, 200);
+        if (invalidFiles.length > 0) {
+            setError(`Files larger than 5MB are not allowed. ${invalidFiles.length} file(s) were rejected.`);
+        } else {
+            setFormData((prevFormData) => ({ ...prevFormData, files: validFiles }));
+            setUploadedFiles(validFiles);
+            setUploadProgress(0);
+            setError(null);
+
+            // Simulate upload progress
+            const interval = setInterval(() => {
+                setUploadProgress((prevProgress) => {
+                    const newProgress = prevProgress + 10;
+                    if (newProgress >= 100) {
+                        clearInterval(interval);
+                        return 100;
+                    }
+                    return newProgress;
+                });
+            }, 200);
+        }
     }, [setFormData]);
 
     // Handle file removal

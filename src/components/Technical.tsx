@@ -2,6 +2,7 @@
 import { useForm } from "react-hook-form";
 import { useFormState } from "./FormContext";
 import { useState } from "react";
+import { useEffect } from "react";
 import axios from 'axios';
 import { ProgressBar } from './ProgressBar';
 import { API_ENDPOINT } from "@/config";
@@ -120,6 +121,18 @@ export function TechnicalForm() {
         defaultValues: formData
     });
     const router = useRouter();
+    //comment out to reveal the right click
+    useEffect(() => {
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
+        document.addEventListener("contextmenu", handleContextMenu);
+
+        return () => {
+            document.removeEventListener("contextmenu", handleContextMenu);
+        };
+    }, []);
 
     async function onHandleFormSubmit(data: TFormValues) {
         setFormData((prevFormData) => ({ ...prevFormData, ...data }));
@@ -151,9 +164,10 @@ export function TechnicalForm() {
         } catch (error) {
             console.error('Error sending data to backend:', error);
             // Handle error state or display error message to the user
+            alert('An error occurred. Please try again.');
+            router.back();
         } finally {
             setIsLoading(false);
-            router.refresh();
         }
     }
 
@@ -164,7 +178,8 @@ export function TechnicalForm() {
             </div>
         ) : isLoading ? (
             <div>
-                <h1>Loading...</h1>
+                <h1>Interpreting ...</h1>
+                <br/>
                 <ProgressBar />
             </div>
         ) : (
