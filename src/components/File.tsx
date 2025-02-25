@@ -63,6 +63,8 @@ export function FileForm() {
         accept: {
             'application/pdf': ['.pdf'],
             'application/msword': ['.doc', '.docx'],
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/png': ['.png'],
         },
     });
 
