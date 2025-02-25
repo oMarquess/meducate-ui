@@ -5,7 +5,8 @@ import cylinderImage from "@/assets/cylinder.png"
 import noodlImage from "@/assets/noodle.png"
 import glassImage from "@/assets/glass.png"
 import Image from "next/image"
-import {motion, useScroll, useTransform, useMotionValueEvent} from 'framer-motion'
+import {motion, useScroll, useTransform, useMotionValueEvent} from 'framer-motion';
+import pyramidImage from "@/assets/pyramid.png";
 import {useRef} from 'react'
 import Link from "next/link";
 
@@ -80,7 +81,8 @@ export const Hero = () => {
             }}
             />
       <motion.img
-            src={cylinderImage.src}
+            // src={cylinderImage.src}
+            src={pyramidImage.src}
             width={220} 
             height={220} 
             alt="Cylinder Image"
