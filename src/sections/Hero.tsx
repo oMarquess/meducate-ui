@@ -67,7 +67,8 @@ export const Hero = () => {
    
     <div className="mt-20 md:mt-0 md:h-[648px] md:flex-1 relative">
       <motion.img 
-            src={cogImage.src} 
+            src={pyramidImage.src}
+            
             alt="Cog-Image" 
             className="md:absolute md:h-full md:w-auto md:max-w-none md:-left-6 lg:left-0 "
             animate={{
@@ -82,6 +83,7 @@ export const Hero = () => {
             />
       <motion.img
             // src={cylinderImage.src}
+            // src={cogImage.src} 
             src={pyramidImage.src}
             width={220} 
             height={220} 
