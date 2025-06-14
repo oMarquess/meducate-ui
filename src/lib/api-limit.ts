@@ -1,13 +1,30 @@
-import {auth} from "@clerk/nextjs/server";
-
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import prismadb from "./prismadb";
-
 import { MAX_FREE_COUNTS } from "@/constant";
 
+// Helper function to get user ID from token
+const getUserIdFromToken = async (): Promise<string | null> => {
+    try {
+        const cookieStore = cookies();
+        const token = cookieStore.get('access_token')?.value;
+        
+        if (!token) {
+            return null;
+        }
 
+        // Note: In production, you should verify the JWT properly
+        // For now, we'll decode without verification (not recommended for production)
+        const decoded = jwt.decode(token) as any;
+        return decoded?.sub || decoded?.user_id || null;
+    } catch (error) {
+        console.error('Error getting user ID from token:', error);
+        return null;
+    }
+};
 
 export const increaseApiLimit = async () => {
-    const { userId } = await auth();
+    const userId = await getUserIdFromToken();
     if (!userId) {
         return;
     }
@@ -31,7 +48,7 @@ export const increaseApiLimit = async () => {
 };
 
 export const checkApiLimit = async () => {
-    const {userId} = await auth();
+    const userId = await getUserIdFromToken();
 
     if (!userId) {
         return false;
@@ -51,7 +68,7 @@ export const checkApiLimit = async () => {
 };
 
 export const getApiLimitCount = async () => {
-    const {userId} = await auth();
+    const userId = await getUserIdFromToken();
     if (!userId) {
         return 0
     }

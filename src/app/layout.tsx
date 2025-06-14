@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import clsx from "clsx";
-import {ClerkProvider} from '@clerk/nextjs'
+import { AuthProvider } from '@/hooks/use-auth'
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -20,9 +20,9 @@ export default function RootLayout({
 
     <html lang="en" className="relative">
       <body className={clsx(dmSans.className, "antialiased bg-[#EAEEFE]")}>
-      <ClerkProvider>
-        {children}
-      </ClerkProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
 

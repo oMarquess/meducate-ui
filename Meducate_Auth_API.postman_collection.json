@@ -1,0 +1,1170 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789012",
+		"name": "Meducate API Collection",
+		"description": "Complete API collection for Meducate application with email verification, authentication, document interpretation, and comprehensive error handling",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "Authentication endpoints with email verification, refresh token support, and comprehensive security features",
+			"item": [
+				{
+					"name": "Sign Up",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User created successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"User created successfully\");",
+									"    });",
+									"    pm.test(\"Requires verification\", function () {",
+									"        pm.expect(jsonData.requires_verification).to.be.true;",
+									"    });",
+									"    pm.test(\"Email sent status\", function () {",
+									"        pm.expect(jsonData.email_sent).to.exist;",
+									"    });",
+									"    pm.environment.set(\"test_email\", \"test@example.com\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\",\n    \"full_name\": \"Test User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Create a new user account. User must verify email before signing in. Sends verification email automatically."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"Email verified successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"verified successfully\");",
+									"    });",
+									"    pm.test(\"Access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"User is verified\", function () {",
+									"        pm.expect(jsonData.user.is_verified).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{verification_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/verify-email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify email address using token from verification email. Returns access tokens for immediate login."
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Verification Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verification email sent\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"sent successfully\");",
+									"    pm.expect(jsonData.email_sent).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{test_email}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/resend-verification",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"resend-verification"
+							]
+						},
+						"description": "Resend verification email to unverified user account."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"Access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"Refresh token received\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"    pm.test(\"Token type is bearer\", function () {",
+									"        pm.expect(jsonData.token_type).to.eql(\"bearer\");",
+									"    });",
+									"} else if (responseCode.code === 403) {",
+									"    pm.test(\"Email verification required\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Email not verified\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Sign in with email and password. Requires verified email address. Returns access token (30 min) and refresh token (7 days)."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In (Unverified - Error Test)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Email verification required message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"Email not verified\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"unverified@example.com\",\n    \"password\": \"testpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Test signing in with unverified email - should return 403 error."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"New access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"New refresh token received\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Get new access and refresh tokens using current refresh token."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User data is returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.email).to.exist;",
+									"    pm.expect(jsonData.full_name).to.exist;",
+									"    pm.expect(jsonData.is_verified).to.exist;",
+									"});",
+									"",
+									"pm.test(\"User is verified\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_verified).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get current user information using access token."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign Out",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signout"
+							]
+						},
+						"description": "Sign out from current device. Invalidates both access and refresh tokens."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign Out All",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/signout-all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signout-all"
+							]
+						},
+						"description": "Sign out from all devices. Invalidates all refresh tokens for the user."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route Test",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access with access token."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Document Interpretation",
+			"description": "Enhanced document processing with PDF, DOCX, and image support",
+			"item": [
+				{
+					"name": "Interpret Mixed Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has processing stats\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.processing_stats).to.exist;",
+									"    pm.expect(jsonData.context_info).to.exist;",
+									"    pm.expect(jsonData.total_documents_processed).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Interpretation result exists\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.interpretation).to.exist;",
+									"    pm.expect(jsonData.interpretation.summary).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Optional: Add if endpoint is protected"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload PDF files (medical reports)"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload DOCX files (medical notes)"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload image files (lab results, scans)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text",
+									"description": "English or French"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text",
+									"description": "Primary School, High School, College, Graduate, Postgraduate, Not listed"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text",
+									"description": "Medical Science, Other Science, Non-Science"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process multiple document types (PDF, DOCX, images) for medical interpretation. Supports up to 20 files with intelligent context management."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret PDF Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload PDF medical reports"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Graduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process PDF files using Claude AI for medical interpretation."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret Images Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload medical images (JPG, PNG, etc.)"
+								},
+								{
+									"key": "language",
+									"value": "French",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "High School",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process image files using Mistral OCR and Claude AI for interpretation."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret DOCX Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload DOCX medical documents"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Primary School",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process DOCX files using Groq AI for interpretation."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "API Health",
+			"description": "Basic API health and connectivity tests",
+			"item": [
+				{
+					"name": "Root Endpoint",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Test basic API connectivity."
+					},
+					"response": []
+				},
+				{
+					"name": "Test CORS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-cors",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-cors"
+							]
+						},
+						"description": "Test CORS configuration."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Testing",
+			"description": "Comprehensive error handling tests",
+			"item": [
+				{
+					"name": "Auth - Invalid Credentials",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"wrong@example.com\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Test error handling for invalid login credentials."
+					},
+					"response": []
+				},
+				{
+					"name": "Auth - Duplicate Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\",\n    \"full_name\": \"Duplicate User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Test error handling for duplicate email registration."
+					},
+					"response": []
+				},
+				{
+					"name": "Auth - Invalid Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"invalid_refresh_token_here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Test error handling for invalid refresh token."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route - No Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access without token."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route - Invalid Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token_here"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access with invalid token."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - No Files",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test document interpretation without files."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - Too Many Files",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Add 21+ files to test limit"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test file limit (max 20 files)."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - Unsupported File Type",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload .txt, .mp4, or other unsupported files"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test unsupported file type handling."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stress Testing",
+			"description": "Test system limits and performance",
+			"item": [
+				{
+					"name": "Large File Processing",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload files close to size limits (PDF: 25MB, DOCX: 15MB, Images: 10MB)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Graduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test processing of files near size limits."
+					},
+					"response": []
+				},
+				{
+					"name": "Maximum Files (20)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload exactly 20 files of mixed types"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Other Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test maximum file limit (20 files)."
+					},
+					"response": []
+				},
+				{
+					"name": "Context Limit Test",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload very large text-heavy documents to test context truncation"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Postgraduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test context limit handling and smart truncation."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set timestamp for requests",
+					"pm.globals.set(\"timestamp\", new Date().toISOString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test to log response time",
+					"pm.test(\"Response time is reasonable\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(30000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string",
+			"description": "JWT access token (auto-populated)"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string",
+			"description": "Refresh token (auto-populated)"
+		}
+	]
+} 

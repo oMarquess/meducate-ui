@@ -1,7 +1,7 @@
-import { UserButton } from "@clerk/nextjs";
+import { UserButton } from "@/components/auth/user-button";
 import MobileSidebar from "@/components/mobile-sidebar";
 
-const Navbar = async () => {
+const Navbar = () => {
     
     return ( 
          

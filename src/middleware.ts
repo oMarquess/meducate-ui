@@ -1,16 +1,27 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getTokenFromRequest, isPublicPath } from '@/lib/auth-middleware';
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/']);
-
-export default clerkMiddleware(async (auth, request) => {
-  console.log('Middleware running');
-  console.log('Request URL:', request.url);
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-    console.log('Protected route, applying authentication');
-    await auth.protect();
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Check if the route is public
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
   }
-});
+  
+  // For protected routes, check for auth token
+  const token = getTokenFromRequest(request);
+  
+  // If no token, redirect to sign-in
+  if (!token) {
+    const signInUrl = new URL('/sign-in', request.url);
+    return NextResponse.redirect(signInUrl);
+  }
+  
+  // Allow access if token exists (token validation is handled by the API)
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
