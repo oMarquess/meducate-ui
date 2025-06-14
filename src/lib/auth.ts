@@ -189,6 +189,47 @@ export const authAPI = {
   },
 };
 
+// Helper function to decode JWT and get expiry time
+const decodeToken = (token: string) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Helper function to check if token is about to expire (within 5 minutes)
+const isTokenAboutToExpire = (token: string): boolean => {
+  const decoded = decodeToken(token);
+  if (!decoded || !decoded.exp) return false;
+  
+  const currentTime = Math.floor(Date.now() / 1000);
+  const expiryTime = decoded.exp;
+  const fiveMinutes = 5 * 60; // 5 minutes in seconds
+  
+  return (expiryTime - currentTime) <= fiveMinutes;
+};
+
+// Proactive token refresh
+export const checkAndRefreshToken = async (): Promise<void> => {
+  const accessToken = getAccessToken();
+  
+  if (!accessToken) return;
+  
+  if (isTokenAboutToExpire(accessToken)) {
+    try {
+      await authAPI.refreshToken();
+    } catch (error) {
+      console.error('Proactive token refresh failed:', error);
+      clearTokens();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/sign-in';
+      }
+    }
+  }
+};
+
 // Helper function to check if user is authenticated
 export const isAuthenticated = (): boolean => {
   return !!getAccessToken();

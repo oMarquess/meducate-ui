@@ -2,7 +2,7 @@ import { useFormState } from "./FormContext";
 import { EducationalForm } from "./EducationalLevel";
 import { EmailForm } from "./UserEmail";
 import { UsernameForm } from "./Username";
-import { TechnicalForm } from "./Technical";
+import { TechnicalForm } from "../app/(dashboard)/(routes)/labs/Technical";
 import { FileForm } from "./File";
 
 export function FormStep(){

@@ -20,26 +20,17 @@ export function RouteGuard({
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) {
-      console.log('RouteGuard: Still loading...');
-      return;
-    }
-
-    console.log('RouteGuard check:', { requireAuth, requireVerification, user: !!user, isSignedIn, isVerified: user?.is_verified });
+    if (isLoading) return;
 
     if (requireAuth && !user) {
-      console.log('RouteGuard: No user, redirecting to sign-in');
       router.push('/sign-in');
       return;
     }
 
     if (requireVerification && user && !user.is_verified) {
-      console.log('RouteGuard: User not verified, redirecting to sign-in');
       router.push('/sign-in');
       return;
     }
-
-    console.log('RouteGuard: Access granted');
   }, [user, isLoading, isSignedIn, router, requireAuth, requireVerification]);
 
   if (isLoading) {

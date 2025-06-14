@@ -24,7 +24,6 @@ export function SignInForm() {
   // Redirect if already signed in
   useEffect(() => {
     if (isSignedIn && user?.is_verified) {
-      console.log('User is already signed in, redirecting to dashboard...');
       router.push('/dashboard');
     }
   }, [isSignedIn, user, router]);
@@ -35,14 +34,11 @@ export function SignInForm() {
     setIsLoading(true);
 
     try {
-      console.log('Attempting to sign in...');
       await signIn({ email, password });
-      console.log('Sign in successful, redirecting to dashboard...');
       
       // Force redirect using window.location for more reliable navigation
       window.location.href = '/dashboard';
     } catch (err: any) {
-      console.error('Sign in error:', err);
       if (err.response?.status === 403) {
         setError('Email not verified. Please check your email and verify your account.');
       } else if (err.response?.status === 401) {

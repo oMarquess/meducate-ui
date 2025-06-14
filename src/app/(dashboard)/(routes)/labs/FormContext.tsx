@@ -4,6 +4,7 @@ interface TFormData{
     username: string;
     email: string;
     educationLevel: string;
+    language: 'English' | 'French';
     technicalLevel: string;
     files: File[]; 
     response?: InterpretationResponse;
@@ -26,6 +27,7 @@ const FormContext = createContext<IFormContext>({
          username : "",
          email : "",
          educationLevel: "",
+         language: 'English',
          technicalLevel: "",
          files: [],
 
@@ -45,6 +47,7 @@ export function FormProvider({children}: IProps){
             username : "",
             email : "",
             educationLevel: "",
+            language: 'English',
             technicalLevel: "",
             files: [],
        },

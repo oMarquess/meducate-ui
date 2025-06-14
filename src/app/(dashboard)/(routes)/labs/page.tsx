@@ -3,8 +3,8 @@
 import WelcomePage from "@/components/WelcomePage";
 import Navbar from "./Navbar";
 // import {UsernameForm} from "@/components/Username";
-import { FormProvider } from '@/components/FormContext';
-import { FormStep } from "@/components/FormStep";
+import { FormProvider } from './FormContext';
+import { FormStep } from "./FormStep";
 
 
 

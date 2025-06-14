@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authAPI, User, SignUpData, SignInData, isAuthenticated, clearTokens } from '@/lib/auth';
+import { authAPI, User, SignUpData, SignInData, isAuthenticated, clearTokens, checkAndRefreshToken } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -23,11 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isSignedIn = !!user && user.is_verified;
 
-  // Load user on mount
+  // Load user on mount and set up proactive token refresh
   useEffect(() => {
     const loadUser = async () => {
       if (isAuthenticated()) {
         try {
+          await checkAndRefreshToken(); // Check and refresh token if needed
           const userData = await authAPI.getCurrentUser();
           setUser(userData);
         } catch (error) {
@@ -39,6 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     loadUser();
+
+    // Set up interval for proactive token refresh (check every 4 minutes)
+    const tokenCheckInterval = setInterval(async () => {
+      if (isAuthenticated()) {
+        await checkAndRefreshToken();
+      }
+    }, 4 * 60 * 1000); // 4 minutes
+
+    return () => clearInterval(tokenCheckInterval);
   }, []);
 
   const signUp = async (data: SignUpData) => {
@@ -48,10 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (data: SignInData) => {
     const response = await authAPI.signIn(data);
-    console.log('Auth hook: Setting user data:', response.user);
     setUser(response.user);
-    
-    // Ensure the state is updated immediately
     return response;
   };
 

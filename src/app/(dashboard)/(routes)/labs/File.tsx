@@ -48,13 +48,16 @@ export function FileForm() {
         }
     };
 
-    // Dropzone configuration
+    // Dropzone configuration - Updated to support new file types
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
             'application/pdf': ['.pdf'],
-            'application/msword': ['.doc', '.docx'],
+            'application/msword': ['.doc'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'],
         },
+        maxFiles: 20, // Based on your API docs - supports up to 20 files
     });
 
     return (
@@ -73,27 +76,50 @@ export function FileForm() {
                     {isDragActive ? (
                         <p className="text-center text-gray-600">Drop the files here...</p>
                     ) : (
-                        <p className="text-center text-gray-600">
-                            Drag & drop files here, or click to select files
-                        </p> 
+                        <div className="text-center text-gray-600">
+                            <p className="mb-2">Drag & drop files here, or click to select files</p>
+                            <p className="text-sm text-gray-500">
+                                Supported: PDF, DOCX, Images (JPG, PNG, etc.) • Max 20 files
+                            </p>
+                        </div> 
                     )}
                 </div>
                 {uploadedFiles.length > 0 ? (
                     <div>
                         <p className="text-sm font-medium text-gray-700">Uploaded Files:</p>
-                        <ul className="mt-2 space-y-1">
-                            {uploadedFiles.map((file) => (
-                                <li key={file.name} className="flex items-center justify-between text-sm text-gray-600">
-                                    <span>{file.name}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveFile(file)}
-                                        className="text-red-500 hover:text-red-700 focus:outline-none"
-                                    >
-                                        Remove
-                                    </button>
-                                </li>
-                            ))}
+                        <ul className="mt-2 space-y-2">
+                            {uploadedFiles.map((file) => {
+                                const getFileType = (file: File) => {
+                                    if (file.type.includes('pdf')) return { type: 'PDF', color: 'bg-red-100 text-red-800' };
+                                    if (file.type.includes('word') || file.name.endsWith('.docx')) return { type: 'DOCX', color: 'bg-blue-100 text-blue-800' };
+                                    if (file.type.startsWith('image/')) return { type: 'Image', color: 'bg-green-100 text-green-800' };
+                                    return { type: 'File', color: 'bg-gray-100 text-gray-800' };
+                                };
+                                
+                                const fileInfo = getFileType(file);
+                                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                                
+                                return (
+                                    <li key={file.name} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                        <div className="flex items-center space-x-3">
+                                            <span className={`px-2 py-1 text-xs font-medium rounded ${fileInfo.color}`}>
+                                                {fileInfo.type}
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                                <p className="text-xs text-gray-500">{fileSizeMB} MB</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveFile(file)}
+                                            className="text-red-500 hover:text-red-700 focus:outline-none text-sm font-medium"
+                                        >
+                                            Remove
+                                        </button>
+                                    </li>
+                                );
+                            })}
                         </ul>
                         <div className="mt-4">
                             <div className="w-full bg-gray-200 rounded-full h-2">

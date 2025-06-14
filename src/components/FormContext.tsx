@@ -1,5 +1,5 @@
 import { createContext , Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
-import { InterpretationResponse } from "./Technical";
+import { InterpretationResponse } from "../app/(dashboard)/(routes)/labs/Technical";
 interface TFormData{
     username: string;
     email: string;
