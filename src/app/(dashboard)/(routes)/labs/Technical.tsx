@@ -362,7 +362,7 @@ function InterpretationResult({ response }: { response: InterpretationResponse }
                                 <div className="space-y-4">
                                     {response.interpretation.smart_questions.map((question, index) => (
                                         <div key={index} className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-                                            <p className="text-gray-800 italic">"{question}"</p>
+                                            <p className="text-gray-800 italic">&ldquo;{question}&rdquo;</p>
                                         </div>
                                     ))}
                                 </div>
@@ -513,8 +513,8 @@ export function TechnicalForm() {
             const interpretationRequest = {
                 files: formData.files,
                 language: formData.language, // Use selected language from form
-                education_level: educationLevelMap[formData.educationLevel] || formData.educationLevel,
-                technical_level: data.technicalLevel, // Direct value since dropdown matches API
+                education_level: (educationLevelMap[formData.educationLevel] || formData.educationLevel) as 'Primary School' | 'High School' | 'College' | 'Graduate' | 'Postgraduate' | 'Not listed',
+                technical_level: data.technicalLevel as 'Medical Science' | 'Other Science' | 'Non-Science',
             };
 
             console.log('Sending interpretation request:', interpretationRequest);

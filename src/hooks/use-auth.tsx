@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   isSignedIn: boolean;
   signUp: (data: SignUpData) => Promise<any>;
-  signIn: (data: SignInData) => Promise<void>;
+  signIn: (data: SignInData) => Promise<any>;
   signOut: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   resendVerification: (email: string) => Promise<any>;

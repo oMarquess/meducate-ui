@@ -14,9 +14,9 @@ import {
 
 // Types
 interface FormData {
-    educationLevel: string;
+    educationLevel: 'Primary School' | 'High School' | 'College' | 'Graduate' | 'Postgraduate' | 'Not listed' | '';
     language: 'English' | 'French';
-    technicalLevel: string;
+    technicalLevel: 'Medical Science' | 'Other Science' | 'Non-Science' | '';
     files: File[];
 }
 
@@ -474,7 +474,7 @@ const LabsPage: React.FC = () => {
                                             <div className="space-y-3">
                                                 {result.interpretation.smart_questions.map((question, index) => (
                                                     <div key={index} className="p-3 bg-blue-50 border-l-4 border-blue-300 rounded-r text-sm">
-                                                        <p className="text-blue-800 italic">"{question}"</p>
+                                                        <p className="text-blue-800 italic">&ldquo;{question}&rdquo;</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -683,7 +683,7 @@ const LabsPage: React.FC = () => {
                             <p className="text-sm text-gray-600">Select your highest level of education</p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {['Primary School', 'High School', 'College', 'Graduate', 'Postgraduate', 'Not listed'].map((level) => (
+                            {(['Primary School', 'High School', 'College', 'Graduate', 'Postgraduate', 'Not listed'] as const).map((level) => (
                                 <button
                                     key={level}
                                     onClick={() => setFormData(prev => ({ ...prev, educationLevel: level }))}
@@ -742,11 +742,11 @@ const LabsPage: React.FC = () => {
                             <p className="text-sm text-gray-600">Select your professional or educational background</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {[
+                            {([
                                 { value: 'Medical Science', desc: 'Medical professional or student' },
                                 { value: 'Other Science', desc: 'Science background (non-medical)' },
                                 { value: 'Non-Science', desc: 'General background' }
-                            ].map((option) => (
+                            ] as const).map((option) => (
                                 <button
                                     key={option.value}
                                     onClick={() => setFormData(prev => ({ ...prev, technicalLevel: option.value }))}
