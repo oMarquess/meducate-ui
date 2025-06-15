@@ -26,15 +26,14 @@ const DashboardLayout = ({
     return (
         <RouteGuard requireAuth={true} requireVerification={true}>
             <div className="h-full relative">
-                <div className="h-full md:flex
-                md:flex-col md:fixed md:inset-y-0 z-[80]
-                bg-gray-900">
-                    <Sidebar 
-                        apiLimitCount={apiLimitCount}
-                        isPro={false}  // Set to false by default since we're not using subscription
-                    />
-                </div>
-                <main className="md:pl-72 pb-10">
+                {/* Sidebar */}
+                <Sidebar 
+                    apiLimitCount={apiLimitCount}
+                    isPro={false}  // Set to false by default since we're not using subscription
+                />
+                
+                {/* Main Content - Uses CSS to adapt to sidebar width */}
+                <main className="md:ml-64 transition-all duration-300 ease-in-out">
                     <Navbar />
                     {children}
                 </main>
