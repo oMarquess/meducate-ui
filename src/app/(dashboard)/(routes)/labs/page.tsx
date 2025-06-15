@@ -102,21 +102,59 @@ const LabsPage: React.FC = () => {
 
     // File drop handler
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        setFormData(prev => ({ ...prev, files: acceptedFiles }));
         setError(null);
         
-        // Simulate upload progress
-        setUploadProgress(0);
-        const interval = setInterval(() => {
-            setUploadProgress((prev) => {
-                const newProgress = prev + 10;
-                if (newProgress >= 100) {
-                    clearInterval(interval);
-                    return 100;
-                }
-                return newProgress;
-            });
-        }, 100);
+        // File size limits (in bytes)
+        const FILE_SIZE_LIMITS = {
+            pdf: 25 * 1024 * 1024,      // 25MB for PDFs
+            docx: 15 * 1024 * 1024,     // 15MB for DOCX
+            image: 10 * 1024 * 1024,    // 10MB for images
+        };
+        
+        // Validate file sizes
+        const oversizedFiles: string[] = [];
+        const validFiles: File[] = [];
+        
+        acceptedFiles.forEach(file => {
+            let sizeLimit = FILE_SIZE_LIMITS.image; // default
+            
+            if (file.type.includes('pdf')) {
+                sizeLimit = FILE_SIZE_LIMITS.pdf;
+            } else if (file.type.includes('word') || file.name.endsWith('.docx')) {
+                sizeLimit = FILE_SIZE_LIMITS.docx;
+            }
+            
+            if (file.size > sizeLimit) {
+                const limitMB = Math.round(sizeLimit / (1024 * 1024));
+                const fileMB = (file.size / (1024 * 1024)).toFixed(1);
+                oversizedFiles.push(`${file.name} (${fileMB}MB) exceeds ${limitMB}MB limit`);
+            } else {
+                validFiles.push(file);
+            }
+        });
+        
+        // Show error for oversized files
+        if (oversizedFiles.length > 0) {
+            setError(`File size limit exceeded:\n${oversizedFiles.join('\n')}\n\nLimits: PDF (25MB), DOCX (15MB), Images (10MB)`);
+        }
+        
+        // Only add valid files
+        if (validFiles.length > 0) {
+            setFormData(prev => ({ ...prev, files: validFiles }));
+            
+            // Simulate upload progress
+            setUploadProgress(0);
+            const interval = setInterval(() => {
+                setUploadProgress((prev) => {
+                    const newProgress = prev + 10;
+                    if (newProgress >= 100) {
+                        clearInterval(interval);
+                        return 100;
+                    }
+                    return newProgress;
+                });
+            }, 100);
+        }
     }, []);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -161,9 +199,14 @@ const LabsPage: React.FC = () => {
         } catch (err: any) {
             console.error('Error:', err);
             if (err.response?.status === 413) {
-                setError('Files are too large. Please reduce file size and try again.');
+                setError('Files are too large. Please reduce file size and try again.\n\nSize limits: PDF (25MB), DOCX (15MB), Images (10MB)');
             } else if (err.response?.status === 400) {
-                setError('Invalid file format or request. Please check your files and try again.');
+                const errorMessage = err.response?.data?.detail || 'Invalid file format or request';
+                if (errorMessage.includes('too large') || errorMessage.includes('size')) {
+                    setError('File size limit exceeded. Please reduce file size and try again.\n\nSize limits: PDF (25MB), DOCX (15MB), Images (10MB)');
+                } else {
+                    setError('Invalid file format or request. Please check your files and try again.');
+                }
             } else if (err.response?.status === 401) {
                 setError('Session expired. Please sign in again.');
             } else if (err.response?.status === 429) {
@@ -258,7 +301,12 @@ const LabsPage: React.FC = () => {
                         {/* Test Results Table */}
                         {result.interpretation.visual_metrics?.test_results && (
                             <div className="p-4 sm:p-6 border-b border-gray-200">
-                                <h3 className="text-lg font-bold mb-4 text-gray-900">Test Results</h3>
+                                <div className="mb-4">
+                                    <h3 className="text-lg font-bold text-gray-900">Test Results</h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Progress bars show where your values fall within the normal range (100% = upper limit of normal)
+                                    </p>
+                                </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
@@ -351,6 +399,71 @@ const LabsPage: React.FC = () => {
                                     </AccordionItem>
                                 )}
 
+                                {/* Action Plan */}
+                                {result.interpretation.action_plan && (
+                                    <AccordionItem value="action-plan" className="border border-gray-200 rounded">
+                                        <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
+                                            <span className="font-medium text-gray-900">Action Plan</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <div className="space-y-4">
+                                                {result.interpretation.action_plan.immediate && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-red-700 mb-2 text-sm">🚨 Immediate Actions</h4>
+                                                        <ul className="space-y-1">
+                                                            {result.interpretation.action_plan.immediate.map((action, index) => (
+                                                                <li key={index} className="flex items-start text-sm">
+                                                                    <span className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                                                    <span className="text-gray-700">{action}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.action_plan.short_term && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-orange-700 mb-2 text-sm">📅 Short-term (1-3 months)</h4>
+                                                        <ul className="space-y-1">
+                                                            {result.interpretation.action_plan.short_term.map((action, index) => (
+                                                                <li key={index} className="flex items-start text-sm">
+                                                                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                                                    <span className="text-gray-700">{action}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.action_plan.long_term && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-blue-700 mb-2 text-sm">🎯 Long-term (6+ months)</h4>
+                                                        <ul className="space-y-1">
+                                                            {result.interpretation.action_plan.long_term.map((action, index) => (
+                                                                <li key={index} className="flex items-start text-sm">
+                                                                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                                                    <span className="text-gray-700">{action}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.action_plan.monitoring && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-green-700 mb-2 text-sm">📊 Monitoring</h4>
+                                                        <ul className="space-y-1">
+                                                            {result.interpretation.action_plan.monitoring.map((action, index) => (
+                                                                <li key={index} className="flex items-start text-sm">
+                                                                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                                                    <span className="text-gray-700">{action}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                )}
+
                                 {/* Smart Questions */}
                                 {result.interpretation.smart_questions && (
                                     <AccordionItem value="questions" className="border border-gray-200 rounded">
@@ -360,8 +473,115 @@ const LabsPage: React.FC = () => {
                                         <AccordionContent className="px-4 pb-4">
                                             <div className="space-y-3">
                                                 {result.interpretation.smart_questions.map((question, index) => (
-                                                    <div key={index} className="p-3 bg-gray-50 border-l-4 border-gray-300 rounded-r text-sm">
-                                                        <p className="text-gray-800 italic">"{question}"</p>
+                                                    <div key={index} className="p-3 bg-blue-50 border-l-4 border-blue-300 rounded-r text-sm">
+                                                        <p className="text-blue-800 italic">"{question}"</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                )}
+
+                                {/* Educational Content */}
+                                {result.interpretation.educational_content && (
+                                    <AccordionItem value="education" className="border border-gray-200 rounded">
+                                        <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
+                                            <span className="font-medium text-gray-900">Understanding Your Results</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <div className="space-y-4">
+                                                <div className="p-3 bg-green-50 rounded-lg">
+                                                    <h4 className="font-semibold text-green-800 mb-2 text-sm">💡 What This Means</h4>
+                                                    <p className="text-green-700 text-sm">{result.interpretation.educational_content.what_this_means}</p>
+                                                </div>
+                                                <div className="p-3 bg-blue-50 rounded-lg">
+                                                    <h4 className="font-semibold text-blue-800 mb-2 text-sm">🎯 Why It Matters</h4>
+                                                    <p className="text-blue-700 text-sm">{result.interpretation.educational_content.why_it_matters}</p>
+                                                </div>
+                                                <div className="p-3 bg-purple-50 rounded-lg">
+                                                    <h4 className="font-semibold text-purple-800 mb-2 text-sm">🏃‍♂️ Lifestyle Impact</h4>
+                                                    <p className="text-purple-700 text-sm">{result.interpretation.educational_content.lifestyle_impact}</p>
+                                                </div>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                )}
+
+                                {/* Emergency Guidelines */}
+                                {result.interpretation.emergency_guidelines && (
+                                    <AccordionItem value="emergency" className="border border-red-200 rounded bg-red-50">
+                                        <AccordionTrigger className="px-4 py-3 hover:bg-red-100 text-left">
+                                            <span className="font-medium text-red-900">🚨 Emergency Guidelines</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <div className="space-y-4">
+                                                {result.interpretation.emergency_guidelines.warning_signs && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-red-800 mb-2 text-sm">⚠️ Warning Signs</h4>
+                                                        <ul className="space-y-1">
+                                                            {result.interpretation.emergency_guidelines.warning_signs.map((sign, index) => (
+                                                                <li key={index} className="flex items-start text-sm">
+                                                                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                                                    <span className="text-red-700">{sign}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.emergency_guidelines.when_to_call_doctor && (
+                                                    <div className="p-3 bg-red-100 rounded-lg">
+                                                        <h4 className="font-semibold text-red-800 mb-2 text-sm">📞 When to Call Doctor</h4>
+                                                        <p className="text-red-700 text-sm">{result.interpretation.emergency_guidelines.when_to_call_doctor}</p>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.emergency_guidelines.emergency_contacts && (
+                                                    <div className="p-3 bg-red-200 rounded-lg">
+                                                        <h4 className="font-semibold text-red-900 mb-2 text-sm">🚑 Emergency Contacts</h4>
+                                                        <p className="text-red-800 text-sm">{result.interpretation.emergency_guidelines.emergency_contacts}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                )}
+
+                                {/* Cultural Context */}
+                                {result.interpretation.cultural_context && (
+                                    <AccordionItem value="cultural" className="border border-gray-200 rounded">
+                                        <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
+                                            <span className="font-medium text-gray-900">🌍 Cultural Considerations</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <div className="space-y-4">
+                                                {result.interpretation.cultural_context.dietary_considerations && (
+                                                    <div className="p-3 bg-orange-50 rounded-lg">
+                                                        <h4 className="font-semibold text-orange-800 mb-2 text-sm">🍽️ Dietary Considerations</h4>
+                                                        <p className="text-orange-700 text-sm">{result.interpretation.cultural_context.dietary_considerations}</p>
+                                                    </div>
+                                                )}
+                                                {result.interpretation.cultural_context.lifestyle_adaptations && (
+                                                    <div className="p-3 bg-teal-50 rounded-lg">
+                                                        <h4 className="font-semibold text-teal-800 mb-2 text-sm">🧘‍♀️ Lifestyle Adaptations</h4>
+                                                        <p className="text-teal-700 text-sm">{result.interpretation.cultural_context.lifestyle_adaptations}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                )}
+
+                                {/* Medical Terms Dictionary */}
+                                {result.interpretation.medical_terms && (
+                                    <AccordionItem value="terms" className="border border-gray-200 rounded">
+                                        <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
+                                            <span className="font-medium text-gray-900">📚 Medical Terms Dictionary</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <div className="space-y-3">
+                                                {Object.entries(result.interpretation.medical_terms).map(([term, definition], index) => (
+                                                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                                                        <h4 className="font-semibold text-gray-900 mb-1 text-sm">{term}</h4>
+                                                        <p className="text-gray-700 text-sm">{definition}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -548,6 +768,7 @@ const LabsPage: React.FC = () => {
                         <div className="mb-4">
                             <h3 className="text-lg font-bold text-gray-900">Upload Medical Documents</h3>
                             <p className="text-sm text-gray-600">Upload PDF, DOCX, or image files (max 20 files)</p>
+                            <p className="text-xs text-gray-500 mt-1">Size limits: PDF (25MB), DOCX (15MB), Images (10MB)</p>
                         </div>
                         
                         <div
@@ -622,7 +843,7 @@ const LabsPage: React.FC = () => {
                     {/* Error Message */}
                     {error && (
                         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-700 text-sm">{error}</p>
+                            <div className="text-red-700 text-sm whitespace-pre-line">{error}</div>
                         </div>
                     )}
 
