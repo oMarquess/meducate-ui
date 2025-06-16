@@ -769,6 +769,9 @@ const LabsPage: React.FC = () => {
                             <h3 className="text-lg font-bold text-gray-900">Upload Medical Documents</h3>
                             <p className="text-sm text-gray-600">Upload PDF, DOCX, or image files (max 20 files)</p>
                             <p className="text-xs text-gray-500 mt-1">Size limits: PDF (25MB), DOCX (15MB), Images (10MB)</p>
+                            <p className="text-xs text-amber-600 mt-1 font-medium">
+                                ⚠️ X-ray and CT scan images are not advised. We are still working on those.
+                            </p>
                         </div>
                         
                         <div

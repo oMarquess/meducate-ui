@@ -81,6 +81,9 @@ export function FileForm() {
                             <p className="text-sm text-gray-500">
                                 Supported: PDF, DOCX, Images (JPG, PNG, etc.) • Max 20 files
                             </p>
+                            <p className="text-xs text-amber-600 mt-2 font-medium">
+                                ⚠️ X-ray and CT scan images are not advised. We are still working on those.
+                            </p>
                         </div> 
                     )}
                 </div>
