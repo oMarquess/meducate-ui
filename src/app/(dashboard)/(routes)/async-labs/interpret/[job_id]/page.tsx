@@ -510,7 +510,10 @@ export default function AsyncLabResultPage() {
                             Go to Dashboard
                         </button>
                         <button
-                            onClick={() => router.push('/labs')}
+                            onClick={() => {
+                                // Use window.location to ensure a fresh page load and clean state
+                                window.location.href = '/labs';
+                            }}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                         >
                             New Analysis

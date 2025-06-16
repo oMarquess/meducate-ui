@@ -105,6 +105,16 @@ const LabsPage: React.FC = () => {
     const [estimatedTime, setEstimatedTime] = useState<string>('');
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
+    // Reset state when component mounts (for fresh starts)
+    useEffect(() => {
+        return () => {
+            // Cleanup any ongoing processes when component unmounts
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        };
+    }, []);
+
     // File drop handler
     const onDrop = useCallback((acceptedFiles: File[]) => {
         setError(null);
@@ -179,6 +189,28 @@ const LabsPage: React.FC = () => {
             ...prev,
             files: prev.files.filter(file => file !== fileToRemove)
         }));
+    };
+
+    // Reset all state for fresh start
+    const resetToNewAnalysis = () => {
+        setFormData({
+            educationLevel: '',
+            language: 'English',
+            technicalLevel: '',
+            files: []
+        });
+        setResult(null);
+        setError(null);
+        setIsLoading(false);
+        setUploadProgress(0);
+        setJobId(null);
+        setJobStatus(null);
+        setProgress(0);
+        setEstimatedTime('');
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+        }
     };
 
     // Cleanup polling on unmount
@@ -687,10 +719,7 @@ const LabsPage: React.FC = () => {
                         <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-200">
                             <div className="flex flex-col sm:flex-row justify-center gap-3">
                                 <button
-                                    onClick={() => {
-                                        setResult(null);
-                                        setFormData({ educationLevel: '', language: 'English', technicalLevel: '', files: [] });
-                                    }}
+                                    onClick={resetToNewAnalysis}
                                     className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors text-sm font-medium"
                                 >
                                     New Analysis
