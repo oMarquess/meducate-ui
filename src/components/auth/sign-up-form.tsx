@@ -34,7 +34,7 @@ export function SignUpForm() {
       });
       
       if (response.requires_verification) {
-        setSuccess('Account created successfully! Please check your email to verify your account.');
+        setSuccess('Account created successfully! Please check your email to verify your account. If you don\'t see the email in your inbox, please check your spam/junk folder.');
       }
     } catch (err: any) {
       if (err.response?.status === 400) {
@@ -58,7 +58,7 @@ export function SignUpForm() {
 
     try {
       await resendVerification(email);
-      setSuccess('Verification email sent successfully! Please check your inbox.');
+      setSuccess('Verification email sent successfully! Please check your inbox and spam/junk folder.');
     } catch (err: any) {
       setError('Failed to send verification email. Please try again.');
     } finally {
@@ -82,9 +82,18 @@ export function SignUpForm() {
               <AlertDescription>{success}</AlertDescription>
             </Alert>
             
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800 font-medium">📧 Email Check Tips:</p>
+              <ul className="text-sm text-blue-700 mt-1 list-disc list-inside space-y-1">
+                <li>Check your spam/junk folder</li>
+                <li>Look for emails from our domain</li>
+                <li>Add us to your safe sender list</li>
+              </ul>
+            </div>
+            
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
-                Didn&apos;t receive the email?
+                Still didn&apos;t receive the email?
               </p>
               <Button 
                 variant="outline" 
