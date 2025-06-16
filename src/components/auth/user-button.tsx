@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { LogOut, User, Home, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface UserButtonProps {
   afterSignOutUrl?: string;
@@ -31,14 +31,41 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
   const { user, signOut, isLoading } = useAuth();
   const router = useRouter();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const handleCloseDialog = () => {
     setShowSignOutDialog(false);
-    // Ensure focus returns to the page
+    
+    // More aggressive focus and cleanup management
     setTimeout(() => {
-      document.body.focus();
-    }, 100);
+      // Remove any lingering modal backdrops
+      const backdrops = document.querySelectorAll('[data-radix-popper-content-wrapper]');
+      backdrops.forEach(backdrop => backdrop.remove());
+      
+      // Clear any aria-hidden attributes that might be stuck
+      document.body.removeAttribute('aria-hidden');
+      document.body.style.removeProperty('pointer-events');
+      
+      // Force focus return to the trigger button
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      } else {
+        document.body.focus();
+      }
+      
+      // Ensure all event listeners are restored
+      document.body.style.overflow = '';
+    }, 150);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      document.body.removeAttribute('aria-hidden');
+      document.body.style.removeProperty('pointer-events');
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -76,7 +103,7 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Button ref={triggerRef} variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {initials}
@@ -106,13 +133,17 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showSignOutDialog} onOpenChange={(open) => {
-        if (!open) {
-          handleCloseDialog();
-        } else {
-          setShowSignOutDialog(open);
-        }
-      }}>
+      <Dialog 
+        open={showSignOutDialog} 
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDialog();
+          } else {
+            setShowSignOutDialog(open);
+          }
+        }}
+        modal={true}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Sign Out</DialogTitle>
