@@ -46,7 +46,7 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
   const handleSignOutAndGoToHome = async () => {
     await signOut();
     setShowSignOutDialog(false);
-    router.push('/');
+    window.location.href = 'https://www.meducate.cloud/';
   };
 
   if (isLoading) {
@@ -106,25 +106,25 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
               You are about to sign out. Where would you like to go next?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
             <Button 
               variant="outline" 
               onClick={() => setShowSignOutDialog(false)}
-              className="w-full sm:w-auto"
+              className="w-full sm:flex-1"
             >
               Cancel
             </Button>
             <Button 
               variant="outline" 
               onClick={handleSignOutAndGoToHome}
-              className="w-full sm:w-auto"
+              className="w-full sm:flex-1"
             >
               <Home className="mr-2 h-4 w-4" />
               Home
             </Button>
             <Button 
               onClick={handleSignOutAndGoToSignIn}
-              className="w-full sm:w-auto"
+              className="w-full sm:flex-1"
             >
               <LogIn className="mr-2 h-4 w-4" />
               Sign In
