@@ -224,6 +224,7 @@ export default function AsyncLabResultPage() {
     const router = useRouter();
     const { isSignedIn, isLoading: authLoading } = useAuth();
     const [result, setResult] = useState<InterpretationResponse | null>(null);
+    const [language, setLanguage] = useState<string>('English');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -248,16 +249,22 @@ export default function AsyncLabResultPage() {
             setIsLoading(true);
             setError(null);
             
+            console.log('Fetching job result for:', jobId);
             const jobResult = await interpretationAPI.getJobStatus(jobId);
+            console.log('Job result:', jobResult);
+            
+            const jobLanguage = jobResult.parameters?.language || 'English';
+            setLanguage(jobLanguage);
+            console.log('Language detected:', jobLanguage);
             
             if (jobResult.status === 'completed' && jobResult.result) {
                 setResult(jobResult.result);
             } else if (jobResult.status === 'processing' || jobResult.status === 'pending') {
-                setError(getTranslation(jobResult.parameters?.language, 'processingMessage'));
+                setError(getTranslation(jobLanguage, 'processingMessage'));
             } else if (jobResult.status === 'failed') {
-                setError(getTranslation(jobResult.parameters?.language, 'failedMessage'));
+                setError(getTranslation(jobLanguage, 'failedMessage'));
             } else {
-                setError(getTranslation(jobResult.parameters?.language, 'notFoundMessage'));
+                setError(getTranslation(jobLanguage, 'notFoundMessage'));
             }
         } catch (err: any) {
             console.error('Error fetching job result:', err);
@@ -367,9 +374,9 @@ export default function AsyncLabResultPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'title')}</h1>
-                        <p className="text-sm sm:text-base text-gray-600">{getTranslation(result.parameters?.language, 'subtitle')}</p>
-                        <p className="text-xs text-gray-500 mt-1">{getTranslation(result.parameters?.language, 'jobId')}: {jobId}</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{getTranslation(language, 'title')}</h1>
+                        <p className="text-sm sm:text-base text-gray-600">{getTranslation(language, 'subtitle')}</p>
+                        <p className="text-xs text-gray-500 mt-1">{getTranslation(language, 'jobId')}: {jobId}</p>
                     </div>
 
                     {/* Back to Dashboard Button */}
@@ -381,7 +388,7 @@ export default function AsyncLabResultPage() {
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            {getTranslation(result.parameters?.language, 'backToDashboard')}
+                            {getTranslation(language, 'backToDashboard')}
                         </button>
                     </div>
 
@@ -392,19 +399,19 @@ export default function AsyncLabResultPage() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.pdfs}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'pdfFiles')}</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(language, 'pdfFiles')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.docx}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'docxFiles')}</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(language, 'docxFiles')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.images}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'images')}</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(language, 'images')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.context_info.total_tokens}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'tokens')}</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(language, 'tokens')}</div>
                                 </div>
                             </div>
                         </div>
@@ -414,15 +421,15 @@ export default function AsyncLabResultPage() {
                             <div className="p-4 sm:p-6 bg-gray-50 border-b border-gray-200">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                     <div>
-                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{getTranslation(result.parameters?.language, 'healthAssessment')}</h3>
-                                        <p className="text-sm text-gray-600">{getTranslation(result.parameters?.language, 'overallHealthEvaluation')}</p>
+                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{getTranslation(language, 'healthAssessment')}</h3>
+                                        <p className="text-sm text-gray-600">{getTranslation(language, 'overallHealthEvaluation')}</p>
                                     </div>
                                     <div className="text-center sm:text-right">
                                         <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                                             {result.interpretation.visual_metrics.overall_health_score}%
                                         </div>
                                         <div className={`inline-block px-3 py-1 rounded border text-xs font-medium ${getRiskLevelColor(result.interpretation.visual_metrics.risk_level)}`}>
-                                            {result.interpretation.visual_metrics.risk_level.toUpperCase()} {getTranslation(result.parameters?.language, 'risk')}
+                                            {result.interpretation.visual_metrics.risk_level.toUpperCase()} {getTranslation(language, 'risk')}
                                         </div>
                                     </div>
                                 </div>
@@ -433,20 +440,20 @@ export default function AsyncLabResultPage() {
                         {result.interpretation.visual_metrics?.test_results && (
                             <div className="p-4 sm:p-6 border-b border-gray-200">
                                 <div className="mb-4">
-                                    <h3 className="text-lg font-bold text-gray-900">{getTranslation(result.parameters?.language, 'testResults')}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900">{getTranslation(language, 'testResults')}</h3>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        {getTranslation(result.parameters?.language, 'testResultsDescription')}
+                                        {getTranslation(language, 'testResultsDescription')}
                                     </p>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b border-gray-200">
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'test')}</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'value')}</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'normalRange')}</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'status')}</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'progress')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(language, 'test')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(language, 'value')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(language, 'normalRange')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(language, 'status')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(language, 'progress')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -457,7 +464,7 @@ export default function AsyncLabResultPage() {
                                                     <td className="py-3 px-2 text-gray-600">{test.normal_range} {test.unit}</td>
                                                     <td className="py-3 px-2">
                                                         <span className={`px-2 py-1 rounded border text-xs font-medium ${getStatusColor(test.status)}`}>
-                                                            {getStatusLabel(test.status, result.parameters?.language)}
+                                                            {getStatusLabel(test.status, language)}
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-2">
@@ -485,7 +492,7 @@ export default function AsyncLabResultPage() {
                                 {/* Summary */}
                                 <AccordionItem value="summary" className="border border-gray-200 rounded">
                                     <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                        <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'summary')}</span>
+                                        <span className="font-medium text-gray-900">{getTranslation(language, 'summary')}</span>
                                     </AccordionTrigger>
                                     <AccordionContent className="px-4 pb-4">
                                         <p className="text-gray-700 leading-relaxed text-sm">{result.interpretation.summary}</p>
@@ -496,7 +503,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.key_findings && (
                                     <AccordionItem value="findings" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'keyFindings')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'keyFindings')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -515,7 +522,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.recommendations && (
                                     <AccordionItem value="recommendations" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'recommendations')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'recommendations')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -534,12 +541,12 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.action_plan && (
                                     <AccordionItem value="action-plan" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'actionPlan')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'actionPlan')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4 space-y-4">
                                             {result.interpretation.action_plan.immediate && (
                                                 <div>
-                                                    <h4 className="font-medium text-red-700 mb-2">{getTranslation(result.parameters?.language, 'immediateActions')}</h4>
+                                                    <h4 className="font-medium text-red-700 mb-2">{getTranslation(language, 'immediateActions')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.immediate.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -549,7 +556,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.short_term && (
                                                 <div>
-                                                    <h4 className="font-medium text-orange-700 mb-2">{getTranslation(result.parameters?.language, 'shortTerm')}</h4>
+                                                    <h4 className="font-medium text-orange-700 mb-2">{getTranslation(language, 'shortTerm')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.short_term.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -559,7 +566,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.long_term && (
                                                 <div>
-                                                    <h4 className="font-medium text-green-700 mb-2">{getTranslation(result.parameters?.language, 'longTerm')}</h4>
+                                                    <h4 className="font-medium text-green-700 mb-2">{getTranslation(language, 'longTerm')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.long_term.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -569,7 +576,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.monitoring && (
                                                 <div>
-                                                    <h4 className="font-medium text-blue-700 mb-2">{getTranslation(result.parameters?.language, 'monitoring')}</h4>
+                                                    <h4 className="font-medium text-blue-700 mb-2">{getTranslation(language, 'monitoring')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.monitoring.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -585,7 +592,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.smart_questions && (
                                     <AccordionItem value="questions" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'questionsForDoctor')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'questionsForDoctor')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -604,24 +611,24 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.educational_content && (
                                     <AccordionItem value="education" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'educationalInformation')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'educationalInformation')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4 space-y-4">
                                             {result.interpretation.educational_content.what_this_means && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'whatThisMeans')}</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(language, 'whatThisMeans')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.what_this_means}</p>
                                                 </div>
                                             )}
                                             {result.interpretation.educational_content.why_it_matters && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'whyItMatters')}</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(language, 'whyItMatters')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.why_it_matters}</p>
                                                 </div>
                                             )}
                                             {result.interpretation.educational_content.lifestyle_impact && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'lifestyleImpact')}</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(language, 'lifestyleImpact')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.lifestyle_impact}</p>
                                                 </div>
                                             )}
@@ -633,7 +640,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.medical_terms && Object.keys(result.interpretation.medical_terms).length > 0 && (
                                     <AccordionItem value="terms" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'medicalTermsGlossary')}</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(language, 'medicalTermsGlossary')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <dl className="space-y-3">
@@ -657,7 +664,7 @@ export default function AsyncLabResultPage() {
                             onClick={() => router.push('/dashboard')}
                             className="px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
                         >
-                            {getTranslation(result.parameters?.language, 'goToDashboard')}
+                            {getTranslation(language, 'goToDashboard')}
                         </button>
                         <button
                             onClick={() => {
@@ -666,7 +673,7 @@ export default function AsyncLabResultPage() {
                             }}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                         >
-                            {getTranslation(result.parameters?.language, 'newAnalysis')}
+                            {getTranslation(language, 'newAnalysis')}
                         </button>
                     </div>
                 </div>
