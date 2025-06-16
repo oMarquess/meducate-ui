@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { interpretationAPI } from '@/lib/interpretation';
@@ -99,6 +99,11 @@ const LabsPage: React.FC = () => {
     const [result, setResult] = useState<InterpretationResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [jobStatus, setJobStatus] = useState<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | null>(null);
+    const [progress, setProgress] = useState(0);
+    const [estimatedTime, setEstimatedTime] = useState<string>('');
+    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
     // File drop handler
     const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -176,6 +181,63 @@ const LabsPage: React.FC = () => {
         }));
     };
 
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        };
+    }, [pollingInterval]);
+
+    // Poll job status
+    const pollJobStatus = async (jobId: string) => {
+        try {
+            const jobResult = await interpretationAPI.getJobStatus(jobId);
+            console.log('Job status update:', jobResult);
+            
+            setJobStatus(jobResult.status);
+            setProgress(jobResult.progress);
+            
+            if (jobResult.status === 'completed' && jobResult.result) {
+                // Job completed successfully
+                setResult(jobResult.result);
+                setIsLoading(false);
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+                await increaseApiLimit();
+                
+            } else if (jobResult.status === 'failed') {
+                // Job failed
+                setError(jobResult.error || 'Interpretation job failed. Please try again.');
+                setIsLoading(false);
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+            } else if (jobResult.status === 'processing') {
+                // Update progress for processing jobs
+                setProgress(jobResult.progress);
+                
+            } else if (jobResult.status === 'pending') {
+                // Job is still pending
+                setProgress(0);
+            }
+            
+        } catch (err: any) {
+            console.error('Error polling job status:', err);
+            // Don't set error for polling failures, just continue trying
+        }
+    };
+
     // Form submission
     const handleSubmit = async () => {
         if (!formData.educationLevel || !formData.technicalLevel || formData.files.length === 0) {
@@ -185,19 +247,43 @@ const LabsPage: React.FC = () => {
 
         setIsLoading(true);
         setError(null);
+        setJobId(null);
+        setJobStatus(null);
+        setProgress(0);
 
         try {
-            const response = await interpretationAPI.interpret({
+            console.log('Starting async interpretation:', formData);
+            
+            // Start async interpretation job
+            const asyncResponse = await interpretationAPI.startAsyncInterpretation({
                 files: formData.files,
                 language: formData.language,
                 education_level: formData.educationLevel,
                 technical_level: formData.technicalLevel,
             });
-
-            setResult(response);
-            await increaseApiLimit();
+            
+            console.log('Async job started:', asyncResponse);
+            
+            setJobId(asyncResponse.job_id);
+            setJobStatus(asyncResponse.status as any);
+            setEstimatedTime(asyncResponse.estimated_completion);
+            
+            // Start polling for job status every 3 seconds
+            const interval = setInterval(() => {
+                pollJobStatus(asyncResponse.job_id);
+            }, 3000);
+            
+            setPollingInterval(interval);
+            
+            // Do initial poll after 2 seconds
+            setTimeout(() => {
+                pollJobStatus(asyncResponse.job_id);
+            }, 2000);
+            
         } catch (err: any) {
-            console.error('Error:', err);
+            console.error('Error starting async interpretation:', err);
+            
+            // Set user-friendly error message
             if (err.response?.status === 413) {
                 setError('Files are too large. Please reduce file size and try again.\n\nSize limits: PDF (25MB), DOCX (15MB), Images (10MB)');
             } else if (err.response?.status === 400) {
@@ -211,10 +297,16 @@ const LabsPage: React.FC = () => {
                 setError('Session expired. Please sign in again.');
             } else if (err.response?.status === 429) {
                 setError('Too many requests. Please wait a moment and try again.');
+            } else if (err.code === 'ERR_NETWORK') {
+                setError('Network error. Please check your connection and try again.');
+            } else if (err.response?.status === 503) {
+                setError('Service temporarily unavailable. Please try again in a few minutes.');
+            } else if (err.message?.includes('CORS')) {
+                setError('Configuration error. Please contact support.');
             } else {
                 setError('An error occurred while processing your request. Please try again.');
             }
-        } finally {
+            
             setIsLoading(false);
         }
     };
@@ -623,19 +715,85 @@ const LabsPage: React.FC = () => {
         );
     }
 
+    // Cancel job function
+    const cancelJob = async () => {
+        if (jobId && jobStatus && ['pending', 'processing'].includes(jobStatus)) {
+            try {
+                await interpretationAPI.cancelJob(jobId);
+                setIsLoading(false);
+                setError('Job cancelled by user.');
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+            } catch (err) {
+                console.error('Error cancelling job:', err);
+                // Don't show error for cancel failures
+            }
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-                <div className="max-w-md mx-auto text-center">
+                <div className="max-w-md mx-auto text-center space-y-6">
                     <div className="relative mb-6">
                         <div className="w-16 h-16 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto"></div>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Analyzing Medical Data</h2>
-                    <p className="text-gray-600 mb-4 text-sm">Processing your documents with AI...</p>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        {jobStatus === 'pending' ? 'Queueing Your Request...' :
+                         jobStatus === 'processing' ? 'Processing Your Medical Reports...' :
+                         'Starting Interpretation...'}
+                    </h2>
+                    
+                    {jobId && (
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-2">Job ID: {jobId}</p>
+                            <p className="text-sm text-gray-600">
+                                {jobStatus === 'pending' && 'Your request is in the queue and will start processing shortly.'}
+                                {jobStatus === 'processing' && `Processing your files... ${progress}% complete`}
+                                {!jobStatus && 'Preparing your interpretation request...'}
+                            </p>
+                            {estimatedTime && (
+                                <p className="text-sm text-blue-600 mt-2">
+                                    Estimated completion: {estimatedTime}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    
                     <div className="w-full bg-gray-200 rounded h-2">
-                        <div className="bg-gray-600 h-2 rounded animate-pulse" style={{ width: '60%' }}></div>
+                        <div 
+                            className="bg-gray-600 h-2 rounded transition-all" 
+                            style={{ width: `${progress}%` }}
+                        ></div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">This may take a few moments</p>
+                    <p className="text-xs text-gray-500">Progress: {progress}%</p>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-blue-800 font-medium">🔄 Background Processing</p>
+                        <p className="text-blue-700 text-sm mt-1">
+                            Your medical reports are being processed in the background. 
+                                                         You&apos;ll receive an email notification when complete.
+                        </p>
+                        {jobStatus === 'processing' && (
+                            <p className="text-blue-700 text-sm mt-2">
+                                Our AI is analyzing your documents and generating personalized insights...
+                            </p>
+                        )}
+                    </div>
+                    
+                    {jobId && jobStatus && ['pending', 'processing'].includes(jobStatus) && (
+                        <button
+                            type="button"
+                            onClick={cancelJob}
+                            className="px-4 py-2 text-red-600 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                        >
+                            Cancel Request
+                        </button>
+                    )}
                 </div>
             </div>
         );
