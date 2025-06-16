@@ -32,9 +32,17 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
   const router = useRouter();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
+  const handleCloseDialog = () => {
+    setShowSignOutDialog(false);
+    // Ensure focus returns to the page
+    setTimeout(() => {
+      document.body.focus();
+    }, 100);
+  };
+
   const handleSignOut = async () => {
     await signOut();
-    setShowSignOutDialog(false);
+    handleCloseDialog();
   };
 
   const handleSignOutAndGoToSignIn = async () => {
@@ -98,7 +106,13 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+      <Dialog open={showSignOutDialog} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseDialog();
+        } else {
+          setShowSignOutDialog(open);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Sign Out</DialogTitle>
@@ -109,7 +123,7 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
           <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
             <Button 
               variant="outline" 
-              onClick={() => setShowSignOutDialog(false)}
+              onClick={handleCloseDialog}
               className="w-full sm:flex-1"
             >
               Cancel
