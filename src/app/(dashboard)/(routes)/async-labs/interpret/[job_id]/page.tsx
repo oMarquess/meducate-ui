@@ -215,8 +215,25 @@ const translations = {
 
 // Helper function to get translated text
 const getTranslation = (language: string | undefined, key: keyof typeof translations.english): string => {
+    console.log(`🔍 Translation Debug:`, {
+        inputLanguage: language,
+        key,
+        languageAfterLowerCase: language?.toLowerCase(),
+        isExactlyFrench: language?.toLowerCase() === 'french',
+        detectedLang: language?.toLowerCase() === 'french' ? 'french' : 'english'
+    });
+    
     const lang = language?.toLowerCase() === 'french' ? 'french' : 'english';
-    return translations[lang][key] || translations.english[key];
+    const translatedText = translations[lang][key] || translations.english[key];
+    
+    console.log(`🔍 Translation Result:`, {
+        finalLang: lang,
+        translatedText,
+        englishVersion: translations.english[key],
+        frenchVersion: translations.french[key]
+    });
+    
+    return translatedText;
 };
 
 export default function AsyncLabResultPage() {
@@ -372,6 +389,19 @@ export default function AsyncLabResultPage() {
         return (
             <div className="min-h-screen bg-gray-50 py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Debug Info - Remove this after debugging */}
+                    <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+                        <h3 className="font-bold text-yellow-800">🐛 Debug Info (Remove this later)</h3>
+                        <p className="text-yellow-700">
+                            <strong>Detected Language:</strong> "{language}" | 
+                            <strong> Lowercase:</strong> "{language?.toLowerCase()}" | 
+                            <strong> Is French?:</strong> {language?.toLowerCase() === 'french' ? 'Yes' : 'No'}
+                        </p>
+                        <p className="text-yellow-700">
+                            <strong>Sample Translation (title):</strong> {getTranslation(language, 'title')}
+                        </p>
+                    </div>
+
                     {/* Header */}
                     <div className="text-center mb-6">
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{getTranslation(language, 'title')}</h1>
