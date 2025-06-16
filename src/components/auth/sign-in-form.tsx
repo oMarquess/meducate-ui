@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,13 +20,16 @@ export function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { signIn, user, isSignedIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
 
   // Redirect if already signed in
   useEffect(() => {
     if (isSignedIn && user?.is_verified) {
-      router.push('/dashboard');
+      const redirectUrl = redirect || '/dashboard';
+      router.push(redirectUrl);
     }
-  }, [isSignedIn, user, router]);
+  }, [isSignedIn, user, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +39,9 @@ export function SignInForm() {
     try {
       await signIn({ email, password });
       
-      // Force redirect using window.location for more reliable navigation
-      window.location.href = '/dashboard';
+      // Redirect to the intended destination or dashboard
+      const redirectUrl = redirect || '/dashboard';
+      window.location.href = redirectUrl;
     } catch (err: any) {
       if (err.response?.status === 403) {
         setError('Email not verified. Please check your email and verify your account.');
