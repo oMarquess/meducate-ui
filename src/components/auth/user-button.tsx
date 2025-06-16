@@ -120,14 +120,14 @@ export function UserButton({ afterSignOutUrl = '/' }: UserButtonProps) {
               className="w-full sm:w-auto"
             >
               <Home className="mr-2 h-4 w-4" />
-              Go to Homepage
+              Home
             </Button>
             <Button 
               onClick={handleSignOutAndGoToSignIn}
               className="w-full sm:w-auto"
             >
               <LogIn className="mr-2 h-4 w-4" />
-              Go to Sign In
+              Sign In
             </Button>
           </DialogFooter>
         </DialogContent>
