@@ -76,7 +76,148 @@ interface InterpretationResponse {
             [key: string]: string;
         };
     };
+    parameters?: {
+        language: string;
+        education_level: string;
+        technical_level: string;
+    };
 }
+
+// Translation object for UI labels
+const translations = {
+    english: {
+        title: "Medical Analysis Results",
+        subtitle: "Comprehensive health interpretation report",
+        backToDashboard: "Back to Dashboard",
+        goToDashboard: "Go to Dashboard",
+        newAnalysis: "New Analysis",
+        loading: "Loading...",
+        loadingResults: "Loading your interpretation results...",
+        unableToLoad: "Unable to Load Results",
+        jobId: "Job ID",
+        
+        // Processing stats
+        pdfFiles: "PDF Files",
+        docxFiles: "DOCX Files",
+        images: "Images",
+        tokens: "Tokens",
+        
+        // Health assessment
+        healthAssessment: "Health Assessment",
+        overallHealthEvaluation: "Overall health evaluation",
+        risk: "RISK",
+        
+        // Test results
+        testResults: "Test Results",
+        testResultsDescription: "Progress bars show where your values fall within the normal range (100% = upper limit of normal)",
+        test: "Test",
+        value: "Value",
+        normalRange: "Normal Range",
+        status: "Status",
+        progress: "Progress",
+        normal: "NORMAL",
+        high: "HIGH",
+        low: "LOW",
+        
+        // Content sections
+        summary: "Summary",
+        keyFindings: "Key Findings",
+        recommendations: "Recommendations",
+        actionPlan: "Action Plan",
+        questionsForDoctor: "Questions for Your Doctor",
+        educationalInformation: "Educational Information",
+        medicalTermsGlossary: "Medical Terms Glossary",
+        
+        // Action plan categories
+        immediateActions: "🚨 Immediate Actions",
+        shortTerm: "📅 Short-term (1-4 weeks)",
+        longTerm: "🎯 Long-term (1+ months)",
+        monitoring: "🔍 Monitoring",
+        
+        // Educational content
+        whatThisMeans: "📚 What This Means",
+        whyItMatters: "💡 Why It Matters",
+        lifestyleImpact: "🏃 Lifestyle Impact",
+        
+        // Error states
+        processingMessage: "Your interpretation is still being processed. Please check back in a few minutes.",
+        failedMessage: "This interpretation job failed. Please try submitting your documents again.",
+        notFoundMessage: "Job results not found or not yet available.",
+        jobNotFoundMessage: "Job not found. This link may be invalid or expired.",
+        authRequiredMessage: "Authentication required. Please sign in to view your results.",
+        permissionDeniedMessage: "You do not have permission to view this result.",
+        defaultErrorMessage: "Unable to load your interpretation results. Please try again."
+    },
+    french: {
+        title: "Résultats de l'Analyse Médicale",
+        subtitle: "Rapport d'interprétation de santé complet",
+        backToDashboard: "Retour au Tableau de Bord",
+        goToDashboard: "Aller au Tableau de Bord",
+        newAnalysis: "Nouvelle Analyse",
+        loading: "Chargement...",
+        loadingResults: "Chargement de vos résultats d'interprétation...",
+        unableToLoad: "Impossible de Charger les Résultats",
+        jobId: "ID de Tâche",
+        
+        // Processing stats
+        pdfFiles: "Fichiers PDF",
+        docxFiles: "Fichiers DOCX",
+        images: "Images",
+        tokens: "Jetons",
+        
+        // Health assessment
+        healthAssessment: "Évaluation de Santé",
+        overallHealthEvaluation: "Évaluation globale de la santé",
+        risk: "RISQUE",
+        
+        // Test results
+        testResults: "Résultats des Tests",
+        testResultsDescription: "Les barres de progression montrent où vos valeurs se situent dans la plage normale (100% = limite supérieure de la normale)",
+        test: "Test",
+        value: "Valeur",
+        normalRange: "Plage Normale",
+        status: "Statut",
+        progress: "Progression",
+        normal: "NORMAL",
+        high: "ÉLEVÉ",
+        low: "BAS",
+        
+        // Content sections
+        summary: "Résumé",
+        keyFindings: "Principales Découvertes",
+        recommendations: "Recommandations",
+        actionPlan: "Plan d'Action",
+        questionsForDoctor: "Questions pour Votre Médecin",
+        educationalInformation: "Informations Éducatives",
+        medicalTermsGlossary: "Glossaire des Termes Médicaux",
+        
+        // Action plan categories
+        immediateActions: "🚨 Actions Immédiates",
+        shortTerm: "📅 Court terme (1-4 semaines)",
+        longTerm: "🎯 Long terme (1+ mois)",
+        monitoring: "🔍 Surveillance",
+        
+        // Educational content
+        whatThisMeans: "📚 Ce que Cela Signifie",
+        whyItMatters: "💡 Pourquoi C'est Important",
+        lifestyleImpact: "🏃 Impact sur le Mode de Vie",
+        
+        // Error states
+        processingMessage: "Votre interprétation est encore en cours de traitement. Veuillez revenir dans quelques minutes.",
+        failedMessage: "Cette tâche d'interprétation a échoué. Veuillez essayer de soumettre vos documents à nouveau.",
+        notFoundMessage: "Résultats de la tâche non trouvés ou pas encore disponibles.",
+        jobNotFoundMessage: "Tâche non trouvée. Ce lien peut être invalide ou expiré.",
+        authRequiredMessage: "Authentification requise. Veuillez vous connecter pour voir vos résultats.",
+        permissionDeniedMessage: "Vous n'avez pas la permission de voir ce résultat.",
+        defaultErrorMessage: "Impossible de charger vos résultats d'interprétation. Veuillez réessayer."
+    }
+};
+
+// Helper function to get translated text
+const getTranslation = (language: string | undefined, key: keyof typeof translations.english): string => {
+    const lang = language?.toLowerCase() === 'french' ? 'french' : 'english';
+    return translations[lang][key] || translations.english[key];
+};
 
 export default function AsyncLabResultPage() {
     const params = useParams();
@@ -112,22 +253,22 @@ export default function AsyncLabResultPage() {
             if (jobResult.status === 'completed' && jobResult.result) {
                 setResult(jobResult.result);
             } else if (jobResult.status === 'processing' || jobResult.status === 'pending') {
-                setError('Your interpretation is still being processed. Please check back in a few minutes.');
+                setError(getTranslation(jobResult.parameters?.language, 'processingMessage'));
             } else if (jobResult.status === 'failed') {
-                setError('This interpretation job failed. Please try submitting your documents again.');
+                setError(getTranslation(jobResult.parameters?.language, 'failedMessage'));
             } else {
-                setError('Job results not found or not yet available.');
+                setError(getTranslation(jobResult.parameters?.language, 'notFoundMessage'));
             }
         } catch (err: any) {
             console.error('Error fetching job result:', err);
             if (err.response?.status === 404) {
-                setError('Job not found. This link may be invalid or expired.');
+                setError(getTranslation(undefined, 'jobNotFoundMessage'));
             } else if (err.response?.status === 401) {
-                setError('Authentication required. Please sign in to view your results.');
+                setError(getTranslation(undefined, 'authRequiredMessage'));
             } else if (err.response?.status === 403) {
-                setError('You do not have permission to view this result.');
+                setError(getTranslation(undefined, 'permissionDeniedMessage'));
             } else {
-                setError('Unable to load your interpretation results. Please try again.');
+                setError(getTranslation(undefined, 'defaultErrorMessage'));
             }
         } finally {
             setIsLoading(false);
@@ -152,13 +293,22 @@ export default function AsyncLabResultPage() {
         }
     };
 
+    const getStatusLabel = (status: string, language: string | undefined) => {
+        switch (status?.toLowerCase()) {
+            case 'normal': return getTranslation(language, 'normal');
+            case 'high': return getTranslation(language, 'high');
+            case 'low': return getTranslation(language, 'low');
+            default: return status?.toUpperCase();
+        }
+    };
+
     // Show loading while auth is loading
     if (authLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
+                    <p className="text-gray-600">{getTranslation(undefined, 'loading')}</p>
                 </div>
             </div>
         );
@@ -170,8 +320,8 @@ export default function AsyncLabResultPage() {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-600 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading your interpretation results...</p>
-                    <p className="text-sm text-gray-500 mt-2">Job ID: {jobId}</p>
+                    <p className="text-gray-600">{getTranslation(undefined, 'loadingResults')}</p>
+                    <p className="text-sm text-gray-500 mt-2">{getTranslation(undefined, 'jobId')}: {jobId}</p>
                 </div>
             </div>
         );
@@ -189,20 +339,20 @@ export default function AsyncLabResultPage() {
                             </svg>
                         </div>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Results</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">{getTranslation(undefined, 'unableToLoad')}</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <div className="space-y-3">
                         <button
                             onClick={() => router.push('/dashboard')}
                             className="w-full px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
                         >
-                            Go to Dashboard
+                            {getTranslation(undefined, 'goToDashboard')}
                         </button>
                         <button
                             onClick={() => router.push('/labs')}
                             className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                         >
-                            New Analysis
+                            {getTranslation(undefined, 'newAnalysis')}
                         </button>
                     </div>
                 </div>
@@ -217,9 +367,9 @@ export default function AsyncLabResultPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Medical Analysis Results</h1>
-                        <p className="text-sm sm:text-base text-gray-600">Comprehensive health interpretation report</p>
-                        <p className="text-xs text-gray-500 mt-1">Job ID: {jobId}</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'title')}</h1>
+                        <p className="text-sm sm:text-base text-gray-600">{getTranslation(result.parameters?.language, 'subtitle')}</p>
+                        <p className="text-xs text-gray-500 mt-1">{getTranslation(result.parameters?.language, 'jobId')}: {jobId}</p>
                     </div>
 
                     {/* Back to Dashboard Button */}
@@ -231,7 +381,7 @@ export default function AsyncLabResultPage() {
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            Back to Dashboard
+                            {getTranslation(result.parameters?.language, 'backToDashboard')}
                         </button>
                     </div>
 
@@ -242,19 +392,19 @@ export default function AsyncLabResultPage() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.pdfs}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">PDF Files</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'pdfFiles')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.docx}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">DOCX Files</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'docxFiles')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.processing_stats.images}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">Images</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'images')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-xl sm:text-2xl font-bold">{result.context_info.total_tokens}</div>
-                                    <div className="text-xs sm:text-sm opacity-90">Tokens</div>
+                                    <div className="text-xs sm:text-sm opacity-90">{getTranslation(result.parameters?.language, 'tokens')}</div>
                                 </div>
                             </div>
                         </div>
@@ -264,15 +414,15 @@ export default function AsyncLabResultPage() {
                             <div className="p-4 sm:p-6 bg-gray-50 border-b border-gray-200">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                     <div>
-                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">Health Assessment</h3>
-                                        <p className="text-sm text-gray-600">Overall health evaluation</p>
+                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{getTranslation(result.parameters?.language, 'healthAssessment')}</h3>
+                                        <p className="text-sm text-gray-600">{getTranslation(result.parameters?.language, 'overallHealthEvaluation')}</p>
                                     </div>
                                     <div className="text-center sm:text-right">
                                         <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                                             {result.interpretation.visual_metrics.overall_health_score}%
                                         </div>
                                         <div className={`inline-block px-3 py-1 rounded border text-xs font-medium ${getRiskLevelColor(result.interpretation.visual_metrics.risk_level)}`}>
-                                            {result.interpretation.visual_metrics.risk_level.toUpperCase()} RISK
+                                            {result.interpretation.visual_metrics.risk_level.toUpperCase()} {getTranslation(result.parameters?.language, 'risk')}
                                         </div>
                                     </div>
                                 </div>
@@ -283,20 +433,20 @@ export default function AsyncLabResultPage() {
                         {result.interpretation.visual_metrics?.test_results && (
                             <div className="p-4 sm:p-6 border-b border-gray-200">
                                 <div className="mb-4">
-                                    <h3 className="text-lg font-bold text-gray-900">Test Results</h3>
+                                    <h3 className="text-lg font-bold text-gray-900">{getTranslation(result.parameters?.language, 'testResults')}</h3>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        Progress bars show where your values fall within the normal range (100% = upper limit of normal)
+                                        {getTranslation(result.parameters?.language, 'testResultsDescription')}
                                     </p>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b border-gray-200">
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">Test</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">Value</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">Normal Range</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">Status</th>
-                                                <th className="text-left py-3 px-2 font-medium text-gray-700">Progress</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'test')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'value')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'normalRange')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'status')}</th>
+                                                <th className="text-left py-3 px-2 font-medium text-gray-700">{getTranslation(result.parameters?.language, 'progress')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -307,7 +457,7 @@ export default function AsyncLabResultPage() {
                                                     <td className="py-3 px-2 text-gray-600">{test.normal_range} {test.unit}</td>
                                                     <td className="py-3 px-2">
                                                         <span className={`px-2 py-1 rounded border text-xs font-medium ${getStatusColor(test.status)}`}>
-                                                            {test.status.toUpperCase()}
+                                                            {getStatusLabel(test.status, result.parameters?.language)}
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-2">
@@ -335,7 +485,7 @@ export default function AsyncLabResultPage() {
                                 {/* Summary */}
                                 <AccordionItem value="summary" className="border border-gray-200 rounded">
                                     <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                        <span className="font-medium text-gray-900">Summary</span>
+                                        <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'summary')}</span>
                                     </AccordionTrigger>
                                     <AccordionContent className="px-4 pb-4">
                                         <p className="text-gray-700 leading-relaxed text-sm">{result.interpretation.summary}</p>
@@ -346,7 +496,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.key_findings && (
                                     <AccordionItem value="findings" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Key Findings</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'keyFindings')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -365,7 +515,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.recommendations && (
                                     <AccordionItem value="recommendations" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Recommendations</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'recommendations')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -384,12 +534,12 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.action_plan && (
                                     <AccordionItem value="action-plan" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Action Plan</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'actionPlan')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4 space-y-4">
                                             {result.interpretation.action_plan.immediate && (
                                                 <div>
-                                                    <h4 className="font-medium text-red-700 mb-2">🚨 Immediate Actions</h4>
+                                                    <h4 className="font-medium text-red-700 mb-2">{getTranslation(result.parameters?.language, 'immediateActions')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.immediate.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -399,7 +549,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.short_term && (
                                                 <div>
-                                                    <h4 className="font-medium text-orange-700 mb-2">📅 Short-term (1-4 weeks)</h4>
+                                                    <h4 className="font-medium text-orange-700 mb-2">{getTranslation(result.parameters?.language, 'shortTerm')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.short_term.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -409,7 +559,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.long_term && (
                                                 <div>
-                                                    <h4 className="font-medium text-green-700 mb-2">🎯 Long-term (1+ months)</h4>
+                                                    <h4 className="font-medium text-green-700 mb-2">{getTranslation(result.parameters?.language, 'longTerm')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.long_term.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -419,7 +569,7 @@ export default function AsyncLabResultPage() {
                                             )}
                                             {result.interpretation.action_plan.monitoring && (
                                                 <div>
-                                                    <h4 className="font-medium text-blue-700 mb-2">🔍 Monitoring</h4>
+                                                    <h4 className="font-medium text-blue-700 mb-2">{getTranslation(result.parameters?.language, 'monitoring')}</h4>
                                                     <ul className="space-y-1">
                                                         {result.interpretation.action_plan.monitoring.map((action, index) => (
                                                             <li key={index} className="text-sm text-gray-700 ml-4">• {action}</li>
@@ -435,7 +585,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.smart_questions && (
                                     <AccordionItem value="questions" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Questions for Your Doctor</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'questionsForDoctor')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <ul className="space-y-2">
@@ -454,24 +604,24 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.educational_content && (
                                     <AccordionItem value="education" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Educational Information</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'educationalInformation')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4 space-y-4">
                                             {result.interpretation.educational_content.what_this_means && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">📚 What This Means</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'whatThisMeans')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.what_this_means}</p>
                                                 </div>
                                             )}
                                             {result.interpretation.educational_content.why_it_matters && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">💡 Why It Matters</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'whyItMatters')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.why_it_matters}</p>
                                                 </div>
                                             )}
                                             {result.interpretation.educational_content.lifestyle_impact && (
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-2">🏃 Lifestyle Impact</h4>
+                                                    <h4 className="font-medium text-gray-900 mb-2">{getTranslation(result.parameters?.language, 'lifestyleImpact')}</h4>
                                                     <p className="text-sm text-gray-700">{result.interpretation.educational_content.lifestyle_impact}</p>
                                                 </div>
                                             )}
@@ -483,7 +633,7 @@ export default function AsyncLabResultPage() {
                                 {result.interpretation.medical_terms && Object.keys(result.interpretation.medical_terms).length > 0 && (
                                     <AccordionItem value="terms" className="border border-gray-200 rounded">
                                         <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                                            <span className="font-medium text-gray-900">Medical Terms Glossary</span>
+                                            <span className="font-medium text-gray-900">{getTranslation(result.parameters?.language, 'medicalTermsGlossary')}</span>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-4">
                                             <dl className="space-y-3">
@@ -507,7 +657,7 @@ export default function AsyncLabResultPage() {
                             onClick={() => router.push('/dashboard')}
                             className="px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
                         >
-                            Go to Dashboard
+                            {getTranslation(result.parameters?.language, 'goToDashboard')}
                         </button>
                         <button
                             onClick={() => {
@@ -516,7 +666,7 @@ export default function AsyncLabResultPage() {
                             }}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                         >
-                            New Analysis
+                            {getTranslation(result.parameters?.language, 'newAnalysis')}
                         </button>
                     </div>
                 </div>
