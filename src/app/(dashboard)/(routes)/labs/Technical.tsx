@@ -1,7 +1,7 @@
 "use client";
 import { useForm } from "react-hook-form"
 import { useFormState } from "./FormContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProgressBar } from './ProgressBar';
 import { useRouter } from 'next/navigation';
 import {
@@ -489,15 +489,82 @@ export function TechnicalForm() {
     const [isCreated, setCreated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [jobStatus, setJobStatus] = useState<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | null>(null);
+    const [progress, setProgress] = useState(0);
+    const [estimatedTime, setEstimatedTime] = useState<string>('');
+    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+    
     const { onHandleBack, setFormData, formData } = useFormState();
     const { register, handleSubmit } = useForm<TFormValues>({
         defaultValues: formData
     });
 
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        };
+    }, [pollingInterval]);
+
+    // Poll job status
+    const pollJobStatus = async (jobId: string) => {
+        try {
+            const jobResult = await interpretationAPI.getJobStatus(jobId);
+            console.log('Job status update:', jobResult);
+            
+            setJobStatus(jobResult.status);
+            setProgress(jobResult.progress);
+            
+            if (jobResult.status === 'completed' && jobResult.result) {
+                // Job completed successfully
+                setFormData((prevFormData) => ({ ...prevFormData, response: jobResult.result }));
+                setCreated(true);
+                setIsLoading(false);
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+                await increaseApiLimit();
+                
+            } else if (jobResult.status === 'failed') {
+                // Job failed
+                setError(jobResult.error || 'Interpretation job failed. Please try again.');
+                setIsLoading(false);
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+            } else if (jobResult.status === 'processing') {
+                // Update progress for processing jobs
+                setProgress(jobResult.progress);
+                
+            } else if (jobResult.status === 'pending') {
+                // Job is still pending
+                setProgress(0);
+            }
+            
+        } catch (err: any) {
+            console.error('Error polling job status:', err);
+            // Don't set error for polling failures, just continue trying
+        }
+    };
+
     async function onHandleFormSubmit(data: TFormValues) {
         setFormData((prevFormData) => ({ ...prevFormData, ...data }));
         setIsLoading(true);
         setError(null);
+        setJobId(null);
+        setJobStatus(null);
+        setProgress(0);
 
         try {
             // Map education level values to API expected values if needed
@@ -512,21 +579,35 @@ export function TechnicalForm() {
 
             const interpretationRequest = {
                 files: formData.files,
-                language: formData.language, // Use selected language from form
+                language: formData.language,
                 education_level: (educationLevelMap[formData.educationLevel] || formData.educationLevel) as 'Primary School' | 'High School' | 'College' | 'Graduate' | 'Postgraduate' | 'Not listed',
                 technical_level: data.technicalLevel as 'Medical Science' | 'Other Science' | 'Non-Science',
             };
 
-            console.log('Sending interpretation request:', interpretationRequest);
+            console.log('Starting async interpretation:', interpretationRequest);
             
-            const response = await interpretationAPI.interpret(interpretationRequest);
-            console.log('Backend response:', response);
+            // Start async interpretation job
+            const asyncResponse = await interpretationAPI.startAsyncInterpretation(interpretationRequest);
+            console.log('Async job started:', asyncResponse);
             
-            setFormData((prevFormData) => ({ ...prevFormData, response }));
-            setCreated(true);
-            await increaseApiLimit();
+            setJobId(asyncResponse.job_id);
+            setJobStatus(asyncResponse.status as any);
+            setEstimatedTime(asyncResponse.estimated_completion);
+            
+            // Start polling for job status every 3 seconds
+            const interval = setInterval(() => {
+                pollJobStatus(asyncResponse.job_id);
+            }, 3000);
+            
+            setPollingInterval(interval);
+            
+            // Do initial poll after 2 seconds
+            setTimeout(() => {
+                pollJobStatus(asyncResponse.job_id);
+            }, 2000);
+            
         } catch (err: any) {
-            console.error('Error sending data to backend:', err);
+            console.error('Error starting async interpretation:', err);
             
             // Set user-friendly error message
             if (err.response?.status === 413) {
@@ -537,13 +618,38 @@ export function TechnicalForm() {
                 setError('Session expired. Please sign in again.');
             } else if (err.response?.status === 429) {
                 setError('Too many requests. Please wait a moment and try again.');
+            } else if (err.code === 'ERR_NETWORK') {
+                setError('Network error. Please check your connection and try again.');
+            } else if (err.response?.status === 503) {
+                setError('Service temporarily unavailable. Please try again in a few minutes.');
+            } else if (err.message?.includes('CORS')) {
+                setError('Configuration error. Please contact support.');
             } else {
                 setError('An error occurred while processing your request. Please try again.');
             }
-        } finally {
+            
             setIsLoading(false);
         }
     }
+
+    const cancelJob = async () => {
+        if (jobId && jobStatus && ['pending', 'processing'].includes(jobStatus)) {
+            try {
+                await interpretationAPI.cancelJob(jobId);
+                setIsLoading(false);
+                setError('Job cancelled by user.');
+                
+                // Clear polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+            } catch (err) {
+                console.error('Error cancelling job:', err);
+                // Don't show error for cancel failures
+            }
+        }
+    };
 
     return (
         isCreated && formData.response ? (
@@ -551,15 +657,68 @@ export function TechnicalForm() {
                 <InterpretationResult response={formData.response} />
             </div>
         ) : isLoading ? (
-            <div>
-                <h1>Loading...</h1>
-                <ProgressBar />
+            <div className="space-y-6">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                        {jobStatus === 'pending' ? 'Queueing Your Request...' :
+                         jobStatus === 'processing' ? 'Processing Your Medical Reports...' :
+                         'Starting Interpretation...'}
+                    </h1>
+                    
+                    {jobId && (
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-2">Job ID: {jobId}</p>
+                            <p className="text-sm text-gray-600">
+                                {jobStatus === 'pending' && 'Your request is in the queue and will start processing shortly.'}
+                                {jobStatus === 'processing' && `Processing your files... ${progress}% complete`}
+                                {!jobStatus && 'Preparing your interpretation request...'}
+                            </p>
+                            {estimatedTime && (
+                                <p className="text-sm text-blue-600 mt-2">
+                                    Estimated completion: {estimatedTime}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+                
+                <ProgressBar progress={progress} />
+                
+                <div className="text-center space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-blue-800 font-medium">🔄 Background Processing</p>
+                        <p className="text-blue-700 text-sm mt-1">
+                                                         Your medical reports are being processed in the background. 
+                             You&apos;ll receive an email notification when complete.
+                        </p>
+                        {jobStatus === 'processing' && (
+                            <p className="text-blue-700 text-sm mt-2">
+                                Our AI is analyzing your documents and generating personalized insights...
+                            </p>
+                        )}
+                    </div>
+                    
+                    {jobId && jobStatus && ['pending', 'processing'].includes(jobStatus) && (
+                        <button
+                            type="button"
+                            onClick={cancelJob}
+                            className="px-4 py-2 text-red-600 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                        >
+                            Cancel Request
+                        </button>
+                    )}
+                </div>
             </div>
         ) : (
             <form className="space-y-9" onSubmit={handleSubmit(onHandleFormSubmit)}>
                 {error && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-md">
                         <p className="text-red-700 text-sm">{error}</p>
+                        {error.includes('timeout') && (
+                            <p className="text-red-600 text-xs mt-2">
+                                Try uploading smaller files or fewer files at once.
+                            </p>
+                        )}
                     </div>
                 )}
                 <div className="flex flex-col gap-4">
@@ -589,8 +748,9 @@ export function TechnicalForm() {
                     <button
                         type="submit"
                         className="h-11 px-6 bg-black text-white rounded-md"
+                        disabled={isLoading}
                     >
-                        Ok!
+                        {isLoading ? 'Starting...' : 'Ok!'}
                     </button>
                 </div>
             </form>

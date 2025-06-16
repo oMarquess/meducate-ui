@@ -720,6 +720,310 @@
 			]
 		},
 		{
+			"name": "Async Document Interpretation",
+			"description": "Asynchronous document interpretation with background processing, email notifications, and job tracking",
+			"item": [
+				{
+					"name": "Start Async Interpretation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"job_id\", jsonData.job_id);",
+									"    pm.test(\"Job started successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"started successfully\");",
+									"    });",
+									"    pm.test(\"Job ID received\", function () {",
+									"        pm.expect(jsonData.job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Status is processing\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"processing\");",
+									"    });",
+									"    pm.test(\"Email notification info\", function () {",
+									"        pm.expect(jsonData.notification.email).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload medical documents (PDF, DOCX, images)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text",
+									"description": "English or French"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text",
+									"description": "General, Primary School, High School, College, Graduate, Postgraduate"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text",
+									"description": "Basic, Medical Science, Other Science, Non-Science"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret"
+							]
+						},
+						"description": "Start asynchronous medical interpretation job. Returns immediately with job ID. User receives email notification when complete."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Job ID matches\", function () {",
+									"        pm.expect(jsonData.job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Status is valid\", function () {",
+									"        pm.expect(jsonData.status).to.be.oneOf([\"pending\", \"processing\", \"completed\", \"failed\", \"cancelled\"]);",
+									"    });",
+									"    pm.test(\"Progress exists\", function () {",
+									"        pm.expect(jsonData.progress).to.be.a('number');",
+									"    });",
+									"    if (jsonData.status === \"completed\") {",
+									"        pm.test(\"Result exists for completed job\", function () {",
+									"            pm.expect(jsonData.result).to.exist;",
+									"            pm.expect(jsonData.result.interpretation).to.exist;",
+									"        });",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret/{{job_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret",
+								"{{job_id}}"
+							]
+						},
+						"description": "Get status and results of an interpretation job. Returns current status and full results if completed."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Jobs History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User ID exists\", function () {",
+									"        pm.expect(jsonData.user_id).to.exist;",
+									"    });",
+									"    pm.test(\"Jobs array exists\", function () {",
+									"        pm.expect(jsonData.jobs).to.be.an('array');",
+									"    });",
+									"    pm.test(\"Total jobs count\", function () {",
+									"        pm.expect(jsonData.total_jobs).to.be.a('number');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/jobs?limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"jobs"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Maximum number of jobs to return (default: 20, max: 100)"
+								}
+							]
+						},
+						"description": "Get user's interpretation job history, sorted by creation date (newest first)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Statistics exist\", function () {",
+									"        pm.expect(jsonData.statistics).to.exist;",
+									"    });",
+									"    pm.test(\"Success rate exists\", function () {",
+									"        pm.expect(jsonData.statistics.success_rate).to.be.a('number');",
+									"    });",
+									"    pm.test(\"Total jobs count\", function () {",
+									"        pm.expect(jsonData.statistics.total_jobs).to.be.a('number');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/jobs/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"jobs",
+								"status"
+							]
+						},
+						"description": "Get summary statistics about user's interpretation jobs including success rate and recent activity."
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Job",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Job cancelled successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"cancelled successfully\");",
+									"    });",
+									"    pm.test(\"Status is cancelled\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"cancelled\");",
+									"    });",
+									"} else if (responseCode.code === 400) {",
+									"    pm.test(\"Cannot cancel processing job\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Cannot cancel\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret/{{job_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret",
+								"{{job_id}}"
+							]
+						},
+						"description": "Cancel a pending interpretation job. Only pending jobs can be cancelled."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Error Testing",
 			"description": "Comprehensive error handling tests",
 			"item": [
@@ -1117,6 +1421,94 @@
 							]
 						},
 						"description": "Test context limit handling and smart truncation."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Async Job Service",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Service is active\", function () {",
+									"        pm.expect(jsonData.service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"Job ID exists\", function () {",
+									"        pm.expect(jsonData.test_job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Email service enabled\", function () {",
+									"        pm.expect(jsonData.email_service_enabled).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-async-job-service",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-async-job-service"
+							]
+						},
+						"description": "Test async job service health and functionality."
+					},
+					"response": []
+				},
+				{
+					"name": "Test PDF Generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"PDF service is active\", function () {",
+									"        pm.expect(jsonData.pdf_service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"PDF generated successfully\", function () {",
+									"        pm.expect(jsonData.pdf_size_bytes).to.be.above(0);",
+									"    });",
+									"    pm.test(\"Logo is available\", function () {",
+									"        pm.expect(jsonData.logo_available).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-pdf-generation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-pdf-generation"
+							]
+						},
+						"description": "Test PDF generation service with logo embedding and report formatting."
 					},
 					"response": []
 				}
