@@ -41,6 +41,79 @@ export interface JobStatusResponse {
   error?: string;
 }
 
+export interface SubscriptionError {
+  error: string;
+  message: string;
+  usage_info?: UsageSummary;
+  upgrade_needed: boolean;
+  upgrade_url: string;
+  file?: string;
+  size_mb?: number;
+}
+
+export interface UsageSummary {
+  subscription: {
+    tier: string;
+    tier_display: string;
+    limits: {
+      monthly_jobs: number | string;
+      max_files_per_job: number;
+      max_file_size_mb: number;
+      priority_processing: boolean;
+      email_support: boolean;
+    };
+  };
+  usage: {
+    jobs_used_this_period: number;
+    jobs_remaining: number | string;
+    total_jobs_all_time: number;
+    last_job_at: string | null;
+    period_start: string;
+    period_end: string;
+    resets_on: string;
+  };
+  upgrade_needed: boolean;
+  upgrade_recommendation: string | null;
+}
+
+export interface JobHistoryResponse {
+  user_id: string;
+  total_jobs: number;
+  jobs: Array<{
+    job_id: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    progress: number;
+    files_count: number;
+    parameters: {
+      language: string;
+      education_level: string;
+      technical_level: string;
+    };
+    summary?: {
+      files_processed: number;
+      has_findings: boolean;
+      summary_preview: string;
+    };
+    error_summary?: string;
+  }>;
+}
+
+export interface JobStatsResponse {
+  user_id: string;
+  statistics: {
+    total_jobs: number;
+    completed: number;
+    processing: number;
+    failed: number;
+    pending: number;
+    cancelled: number;
+    success_rate: number;
+    recent_jobs: number;
+  };
+}
+
 export const interpretationAPI = {
   // Start async interpretation job
   startAsyncInterpretation: async (data: InterpretationRequest): Promise<AsyncJobResponse> => {
@@ -72,7 +145,7 @@ export const interpretationAPI = {
   },
 
   // Get user's job history
-  getUserJobs: async (limit: number = 20) => {
+  getUserJobs: async (limit: number = 20): Promise<JobHistoryResponse> => {
     const response = await authenticatedAPI.get(`/async-labs/jobs?limit=${limit}`);
     return response.data;
   },
@@ -84,8 +157,14 @@ export const interpretationAPI = {
   },
 
   // Get job statistics
-  getJobStats: async () => {
+  getJobStats: async (): Promise<JobStatsResponse> => {
     const response = await authenticatedAPI.get('/async-labs/jobs/status');
+    return response.data;
+  },
+
+  // Get user's usage summary (subscription and usage info)
+  getUsageSummary: async (): Promise<UsageSummary> => {
+    const response = await authenticatedAPI.get('/subscription/usage');
     return response.data;
   },
 

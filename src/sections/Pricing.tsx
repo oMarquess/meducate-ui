@@ -88,7 +88,7 @@ export const Pricing = () => {
             {buttonText}
           </Link>
         ) : (
-          <button className={twMerge("btn btn-primary w-full mt-[30px]", inverse === true && "bg-white text-black")}>{buttonText}</button>
+        <button className={twMerge("btn btn-primary w-full mt-[30px]", inverse === true && "bg-white text-black")}>{buttonText}</button>
         )}
         <ul className="flex flex-col gap-5 mt-8">
           {features.map((feature) => (

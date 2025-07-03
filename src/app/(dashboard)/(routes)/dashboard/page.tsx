@@ -3,15 +3,24 @@
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowRight, StethoscopeIcon } from "lucide-react";
+import { ArrowRight, StethoscopeIcon, History, FileText } from "lucide-react";
 
 const tools = [
   {
-    label: "Lab Runs",
+    label: "New Lab Analysis",
     icon: StethoscopeIcon,
     color: "text-violet-500",
     bgColor: "bg-violet-500/10",
     href: "/labs",
+    description: "Upload and analyze medical documents"
+  },
+  {
+    label: "Interpretation History",
+    icon: History,
+    color: "text-blue-500", 
+    bgColor: "bg-blue-500/10",
+    href: "/interpretations",
+    description: "View your past analysis results"
   },
 ];
 
@@ -39,7 +48,10 @@ const DashboardPage = () => {
               <div className={cn("p-2 w-fit rounded-md", tool.bgColor)}>
                 <tool.icon className={cn("w-8 h-8", tool.color)} />
               </div>
-              <div className="font-semibold">{tool.label}</div>
+              <div className="flex flex-col">
+                <div className="font-semibold">{tool.label}</div>
+                <p className="text-sm text-muted-foreground">{tool.description}</p>
+              </div>
             </div>
             <ArrowRight className="w-5 h-5" />
           </Card>
