@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { interpretationAPI } from '@/lib/interpretation';
 import { useAuth } from '@/hooks/use-auth';
@@ -224,27 +224,13 @@ export default function AsyncLabResultPage() {
     const router = useRouter();
     const { isSignedIn, isLoading: authLoading } = useAuth();
     const [result, setResult] = useState<InterpretationResponse | null>(null);
-    const [language, setLanguage] = useState<string>('English');
+    const [language, setLanguage] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
     const jobId = params.job_id as string;
 
-    useEffect(() => {
-        // Wait for auth to load
-        if (authLoading) return;
-        
-        // Redirect to sign in if not authenticated
-        if (!isSignedIn) {
-            router.push(`/sign-in?redirect=/async-labs/interpret/${jobId}`);
-            return;
-        }
-        
-        // Fetch job results
-        fetchJobResult();
-    }, [authLoading, isSignedIn, jobId, router]);
-
-    const fetchJobResult = async () => {
+    const fetchJobResult = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
@@ -280,7 +266,22 @@ export default function AsyncLabResultPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [jobId]);
+
+    useEffect(() => {
+        if (authLoading || !isSignedIn) {
+            return;
+        }
+        
+        if (!jobId) {
+            console.error('No job ID found in URL');
+            router.push('/dashboard');
+            return;
+        }
+        
+        // Fetch job results
+        fetchJobResult();
+    }, [authLoading, isSignedIn, jobId, router, fetchJobResult]);
 
     const getRiskLevelColor = (riskLevel: string) => {
         switch (riskLevel?.toLowerCase()) {
