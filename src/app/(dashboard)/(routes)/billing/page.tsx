@@ -200,7 +200,7 @@ export default function BillingPage() {
 
               {/* Usage Statistics */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">This Month's Usage</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">This Month&apos;s Usage</h3>
                 {stats && (
                   <div className="space-y-4">
                     {/* Jobs Usage */}

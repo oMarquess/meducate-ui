@@ -115,7 +115,7 @@ const LabsPage: React.FC = () => {
                 clearInterval(pollingInterval);
             }
         };
-    }, []);
+    }, [pollingInterval]);
 
     // File drop handler
     const onDrop = useCallback((acceptedFiles: File[]) => {
