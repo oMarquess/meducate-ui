@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
-import { interpretationAPI } from '@/lib/interpretation';
+import { interpretationAPI, SubscriptionError } from '@/lib/interpretation';
 import { increaseApiLimit } from '@/lib/api-limit';
 import {
     Accordion,
@@ -11,6 +11,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import Link from 'next/link';
 
 // Types
 interface FormData {
@@ -104,6 +105,7 @@ const LabsPage: React.FC = () => {
     const [progress, setProgress] = useState(0);
     const [estimatedTime, setEstimatedTime] = useState<string>('');
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+    const [subscriptionError, setSubscriptionError] = useState<SubscriptionError | null>(null);
 
     // Reset state when component mounts (for fresh starts)
     useEffect(() => {
@@ -315,7 +317,22 @@ const LabsPage: React.FC = () => {
         } catch (err: any) {
             console.error('Error starting async interpretation:', err);
             
-            // Set user-friendly error message
+            // Handle subscription limit errors (HTTP 402)
+            if (err.response?.status === 402) {
+                const errorDetail = err.response?.data?.detail;
+                if (errorDetail && typeof errorDetail === 'object') {
+                    // Detailed subscription error with usage info
+                    setSubscriptionError(errorDetail);
+                    setError(errorDetail.message);
+                } else {
+                    // Simple subscription error message
+                    setError(errorDetail || 'Subscription limit exceeded. Please upgrade your plan.');
+                }
+                setIsLoading(false);
+                return;
+            }
+            
+            // Set user-friendly error message for other errors
             if (err.response?.status === 413) {
                 setError('Files are too large. Please reduce file size and try again.\n\nSize limits: PDF (25MB), DOCX (15MB), Images (10MB)');
             } else if (err.response?.status === 400) {
@@ -367,6 +384,68 @@ const LabsPage: React.FC = () => {
             default: return 'text-gray-700 bg-gray-50 border-gray-200';
         }
     };
+
+    // Subscription Error Component
+    const SubscriptionErrorDisplay = ({ error }: { error: SubscriptionError }) => (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+            <div className="flex items-start">
+                <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                </div>
+                <div className="ml-3 flex-1">
+                    <h3 className="text-lg font-medium text-amber-800">
+                        {error.error}
+                    </h3>
+                    <p className="mt-2 text-sm text-amber-700">
+                        {error.message}
+                    </p>
+                    
+                    {error.usage_info && (
+                        <div className="mt-4 bg-white rounded-md p-4">
+                            <h4 className="text-sm font-medium text-gray-900 mb-2">Current Plan Details</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="text-gray-500">Plan:</span>
+                                    <span className="ml-2 font-medium">{error.usage_info.subscription.tier_display}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Jobs Used:</span>
+                                    <span className="ml-2 font-medium">
+                                        {error.usage_info.usage.jobs_used_this_period} / {error.usage_info.subscription.limits.monthly_jobs}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Resets On:</span>
+                                    <span className="ml-2 font-medium">{new Date(error.usage_info.usage.resets_on).toLocaleDateString()}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Max Files:</span>
+                                    <span className="ml-2 font-medium">{error.usage_info.subscription.limits.max_files_per_job} per job</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="mt-4 flex space-x-3">
+                        <Link
+                            href="/billing"
+                            className="bg-amber-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-700 transition-colors"
+                        >
+                            Upgrade Plan
+                        </Link>
+                        <Link
+                            href="/dashboard"
+                            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors"
+                        >
+                            Go to Dashboard
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     if (result) {
         return (
@@ -823,6 +902,21 @@ const LabsPage: React.FC = () => {
                             Cancel Request
                         </button>
                     )}
+                </div>
+            </div>
+        );
+    }
+
+    // Handle subscription error display
+    if (subscriptionError) {
+        return (
+            <div className="min-h-screen bg-gray-50 py-8">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Subscription Limit Reached</h1>
+                        <p className="text-gray-600">Please upgrade your plan to continue using our services</p>
+                    </div>
+                    <SubscriptionErrorDisplay error={subscriptionError} />
                 </div>
             </div>
         );
