@@ -38,8 +38,24 @@ export const ProductShowcase = () => {
         </div>
 
         <div className="relative">
-          {/* Product Image */}
-          <Image src={productImage} alt="Product Image" className="mt-10 rounded-2xl shadow-2xl shadow-[#001E80]/20 border-2 border-[#001E80]/10 hover:scale-105 transition-transform duration-300" />
+          {/* Demo Video */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="mt-10 w-full rounded-2xl shadow-2xl shadow-[#001E80]/20 border-2 border-[#001E80]/10 hover:scale-105 transition-transform duration-300"
+            poster={productImage.src}
+          >
+            <source src="/Demo-shorts.mp4" type="video/mp4" />
+            {/* Fallback for browsers that don't support video */}
+            <Image 
+              src={productImage} 
+              alt="Meducate AI Demo" 
+              className="w-full rounded-2xl shadow-2xl shadow-[#001E80]/20 border-2 border-[#001E80]/10" 
+            />
+          </video>
 
           {/* Wrap Pyramid Image in motion.div for animation */}
           <motion.div
