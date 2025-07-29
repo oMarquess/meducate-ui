@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { FreeCounter } from "./free-counter";
+import { MAX_FREE_COUNTS } from "@/constant";
 
 const montserrat = Montserrat({ weight: "600", subsets: ["latin"] });
 
@@ -135,13 +136,13 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
         <>
             {/* Mobile Menu Button */}
             <button
-                className="fixed top-4 left-4 z-50 md:hidden p-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+                className="fixed top-4 left-4 z-50 md:hidden p-2 bg-background border border-border rounded-lg shadow-lg"
                 onClick={toggleMobileSidebar}
             >
                 {isMobileOpen ? (
-                    <X className="h-5 w-5 text-gray-600" />
+                    <X className="h-5 w-5 text-foreground" />
                 ) : (
-                    <Menu className="h-5 w-5 text-gray-600" />
+                    <Menu className="h-5 w-5 text-foreground" />
                 )}
             </button>
 
@@ -156,7 +157,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
             {/* Sidebar */}
             <div
                 className={cn(
-                    "fixed inset-y-0 left-0 z-40 bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out",
+                    "fixed inset-y-0 left-0 z-40 bg-card border-r border-border shadow-lg transition-all duration-300 ease-in-out",
                     // Mobile styles
                     isMobileOpen ? "translate-x-0" : "-translate-x-full",
                     "md:translate-x-0",
@@ -168,7 +169,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
             >
                 <div className="flex flex-col h-full">
                     {/* Compact Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                         <Link href="/dashboard" className={cn(
                             "flex items-center transition-all duration-300",
                             isCollapsed ? "md:opacity-0 md:pointer-events-none md:w-0 md:overflow-hidden" : "opacity-100"
@@ -177,7 +178,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                 <Image src={Logo} alt="Meducate Logo" height={28} width={28} />
                             </div>
                             <h1 className={cn(
-                                "font-bold text-gray-900 text-base whitespace-nowrap",
+                                "font-bold text-foreground text-base whitespace-nowrap",
                                 montserrat.className
                             )}>
                                 Meducate.AI
@@ -187,13 +188,13 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                         {/* Collapse Button - Desktop Only */}
                         <button
                             onClick={toggleCollapse}
-                            className="hidden md:flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 transition-colors group"
+                            className="hidden md:flex items-center justify-center w-7 h-7 rounded-md hover:bg-muted transition-colors group"
                             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         >
                             {isCollapsed ? (
-                                <ChevronRight className="h-3.5 w-3.5 text-gray-500 group-hover:text-gray-700" />
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
                             ) : (
-                                <ChevronLeft className="h-3.5 w-3.5 text-gray-500 group-hover:text-gray-700" />
+                                <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
                             )}
                         </button>
                     </div>
@@ -208,7 +209,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                         "transition-all duration-300",
                                         isCollapsed ? "md:opacity-0 md:h-0 md:overflow-hidden" : "opacity-100"
                                     )}>
-                                        <h2 className="mb-2 px-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+                                        <h2 className="mb-2 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                                             {group.label}
                                         </h2>
                                     </div>
@@ -222,16 +223,16 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                                 className={cn(
                                                     "group flex items-center rounded-lg transition-all duration-200 relative",
                                                     pathname === item.href
-                                                        ? "bg-blue-50 text-blue-700 border border-blue-200/50"
-                                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                                                        ? "bg-primary/10 text-primary border border-primary/20"
+                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                                     isCollapsed ? "md:justify-center md:p-2.5" : "p-2.5",
-                                                    item.isHighlight && "hover:bg-violet-50"
+                                                    item.isHighlight && "hover:bg-violet-500/10"
                                                 )}
                                                 title={isCollapsed ? item.label : undefined}
                                             >
                                                 <item.icon className={cn(
                                                     "h-4 w-4 transition-colors flex-shrink-0",
-                                                    pathname === item.href ? "text-blue-600" : item.color,
+                                                    pathname === item.href ? "text-primary" : item.color,
                                                     isCollapsed ? "md:mr-0" : "mr-2.5"
                                                 )} />
                                                 
@@ -254,9 +255,9 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                                 
                                                 {/* Enhanced Tooltip for collapsed state */}
                                                 {isCollapsed && (
-                                                    <div className="hidden md:group-hover:block absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                                                    <div className="hidden md:group-hover:block absolute left-full ml-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none border">
                                                         <div className="font-medium">{item.label}</div>
-                                                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover rotate-45 border-l border-b"></div>
                                                     </div>
                                                 )}
                                             </Link>
@@ -269,7 +270,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                             "transition-all duration-300 mt-3 mx-2",
                                             isCollapsed ? "md:opacity-0" : "opacity-100"
                                         )}>
-                                            <Separator className="bg-gray-150" />
+                                            <Separator />
                                         </div>
                                     )}
                                 </div>
@@ -278,7 +279,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                     </div>
 
                     {/* Compact Footer - User Info */}
-                    <div className="px-3 py-3 border-t border-gray-100 bg-gray-50/30">
+                    <div className="px-3 py-3 border-t border-border bg-muted/30">
                         <div className={cn(
                             "flex items-center transition-all duration-300",
                             isCollapsed ? "md:justify-center" : "justify-start"
@@ -292,8 +293,8 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                             )}>
                                 <div className="flex items-center justify-between w-full">
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900">User</p>
-                                        <p className="text-xs text-gray-500">Free Plan</p>
+                                        <p className="text-sm font-medium text-foreground">User</p>
+                                        <p className="text-xs text-muted-foreground">Free Plan</p>
                                     </div>
                                     {!isPro && (
                                         <div className="ml-6">
@@ -301,7 +302,7 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                                                 variant="secondary" 
                                                 className="text-xs h-6 px-2 bg-blue-100 text-blue-700 border-blue-200 font-medium"
                                             >
-                                                {apiLimitCount}/10
+                                                {apiLimitCount}/{MAX_FREE_COUNTS}
                                             </Badge>
                                         </div>
                                     )}
@@ -312,14 +313,14 @@ const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
                         {/* Usage Progress Bar */}
                         {!isPro && !isCollapsed && (
                             <div className="mt-2 px-0.5">
-                                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                                     <span>Usage</span>
-                                    <span>{Math.round((apiLimitCount / 10) * 100)}%</span>
+                                    <span>{Math.round((apiLimitCount / MAX_FREE_COUNTS) * 100)}%</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div className="w-full bg-secondary rounded-full h-1.5">
                                     <div 
-                                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                                        style={{ width: `${(apiLimitCount / 10) * 100}%` }}
+                                        className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${(apiLimitCount / MAX_FREE_COUNTS) * 100}%` }}
                                     ></div>
                                 </div>
                             </div>

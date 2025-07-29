@@ -8,10 +8,10 @@ export const API_ENDPOINT = `${API_BASE_URL}/labs/interpret`;
 export const APP_CONFIG = {
   production: {
     // baseURL: 'https://meducate-4b014c640ca1.herokuapp.com',
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:8000',
   },
   development: {
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:8000',
   }
 };
 

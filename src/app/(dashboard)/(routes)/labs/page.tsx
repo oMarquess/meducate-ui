@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { interpretationAPI, SubscriptionError } from '@/lib/interpretation';
 import { increaseApiLimit } from '@/lib/api-limit';
+import { useAuth } from '@/hooks/use-auth';
 import {
     Accordion,
     AccordionContent,
@@ -90,6 +91,7 @@ interface InterpretationResponse {
 
 const LabsPage: React.FC = () => {
     const router = useRouter();
+    const { user } = useAuth();
     const [formData, setFormData] = useState<FormData>({
         educationLevel: '',
         language: 'English',
@@ -244,7 +246,9 @@ const LabsPage: React.FC = () => {
                     setPollingInterval(null);
                 }
                 
-                await increaseApiLimit();
+                if (user?.id) {
+                    await increaseApiLimit(user.id);
+                }
                 
             } else if (jobResult.status === 'failed') {
                 // Job failed

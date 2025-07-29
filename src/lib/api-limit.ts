@@ -1,67 +1,53 @@
-import jwt from 'jsonwebtoken';
 import { MAX_FREE_COUNTS } from "@/constant";
-
-// Helper function to get user ID from client-side token
-const getUserIdFromToken = (): string | null => {
-    try {
-        // Try localStorage first, then cookies as fallback
-        let token = localStorage.getItem('access_token');
-        
-        if (!token) {
-            // Fallback to cookies
-            const cookies = document.cookie.split(';');
-            const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('access_token='));
-            token = tokenCookie ? tokenCookie.split('=')[1] : null;
-        }
-        
-        if (!token) {
-            return null;
-        }
-
-        // Decode JWT to get user ID (client-side decoding is safe for non-sensitive data)
-        const decoded = jwt.decode(token) as any;
-        return decoded?.sub || decoded?.user_id || decoded?.id || null;
-    } catch (error) {
-        console.error('Error getting user ID from token:', error);
-        return null;
-    }
-};
 
 // Since we're now client-side, these functions will be simplified
 // In a real app, you'd make API calls to your backend for these operations
-export const increaseApiLimit = async () => {
-    const userId = getUserIdFromToken();
+export const increaseApiLimit = async (userId: string) => {
     if (!userId) {
-        console.warn('No user ID found, cannot increase API limit');
+        console.warn('increaseApiLimit: No user ID provided, cannot increase API limit');
         return;
     }
 
     try {
-        // In a real implementation, you'd make an API call to your backend
-        // For now, we'll just log it
-        console.log('API limit increased for user:', userId);
+        // Get current count from localStorage
+        const storageKey = `api_limit_${userId}`;
+        const currentValue = localStorage.getItem(storageKey);
+        const currentCount = parseInt(currentValue || '0', 10);
+        const newCount = currentCount + 1;
         
-        // You could make an API call here:
+        // Store updated count
+        localStorage.setItem(storageKey, newCount.toString());
+        
+        console.log('🚀 API Limit Increased:', {
+            userId: userId,
+            storageKey: storageKey,
+            previousValue: currentValue,
+            previousCount: currentCount,
+            newCount: newCount,
+            stored: localStorage.getItem(storageKey)
+        });
+        
+        // You could make an API call here when backend is ready:
         // await fetch('/api/increase-limit', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     } catch (error) {
         console.error('Error increasing API limit:', error);
     }
 };
 
-export const checkApiLimit = async (): Promise<boolean> => {
-    const userId = getUserIdFromToken();
-    
+export const checkApiLimit = async (userId: string): Promise<boolean> => {
     if (!userId) {
         return false;
     }
 
     try {
-        // In a real implementation, you'd make an API call to check the limit
-        // For now, we'll return true (unlimited for development)
-        console.log('Checking API limit for user:', userId);
-        return true;
+        // Check if user has reached the limit
+        const currentCount = await getApiLimitCount(userId);
+        const hasReachedLimit = currentCount >= MAX_FREE_COUNTS;
         
-        // You could make an API call here:
+        console.log('Checking API limit for user:', userId, 'Count:', currentCount, 'Limit:', MAX_FREE_COUNTS, 'Can proceed:', !hasReachedLimit);
+        return !hasReachedLimit;
+        
+        // You could make an API call here when backend is ready:
         // const response = await fetch('/api/check-limit', { headers: { Authorization: `Bearer ${token}` } });
         // return response.ok;
     } catch (error) {
@@ -70,19 +56,45 @@ export const checkApiLimit = async (): Promise<boolean> => {
     }
 };
 
-export const getApiLimitCount = async (): Promise<number> => {
-    const userId = getUserIdFromToken();
+// Helper function to reset API limit count (useful for testing or admin purposes)
+export const resetApiLimitCount = async (userId: string): Promise<void> => {
     if (!userId) {
+        console.warn('No user ID provided, cannot reset API limit');
+        return;
+    }
+
+    try {
+        const storageKey = `api_limit_${userId}`;
+        localStorage.removeItem(storageKey);
+        console.log('API limit count reset for user:', userId);
+    } catch (error) {
+        console.error('Error resetting API limit count:', error);
+    }
+};
+
+export const getApiLimitCount = async (userId: string): Promise<number> => {
+    if (!userId) {
+        console.warn('getApiLimitCount: No userId provided');
         return 0;
     }
 
     try {
-        // In a real implementation, you'd make an API call to get the count
-        // For now, we'll return 0
-        console.log('Getting API limit count for user:', userId);
-        return 0;
+        // Get count from localStorage
+        const storageKey = `api_limit_${userId}`;
+        const storageValue = localStorage.getItem(storageKey);
+        const count = parseInt(storageValue || '0', 10);
         
-        // You could make an API call here:
+        console.log('🔢 API Limit Debug:', {
+            userId: userId,
+            storageKey: storageKey,
+            storageValue: storageValue,
+            parsedCount: count,
+            localStorage: typeof localStorage !== 'undefined' ? 'available' : 'unavailable'
+        });
+        
+        return count;
+        
+        // You could make an API call here when backend is ready:
         // const response = await fetch('/api/limit-count', { headers: { Authorization: `Bearer ${token}` } });
         // const data = await response.json();
         // return data.count || 0;
