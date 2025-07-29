@@ -1,0 +1,3201 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789012",
+		"name": "Meducate API Collection",
+		"description": "Complete API collection for Meducate application with email verification, authentication, document interpretation, API key management, and comprehensive error handling",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "Authentication endpoints with email verification, refresh token support, and comprehensive security features",
+			"item": [
+				{
+					"name": "Sign Up",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User created successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"User created successfully\");",
+									"    });",
+									"    pm.test(\"Requires verification\", function () {",
+									"        pm.expect(jsonData.requires_verification).to.be.true;",
+									"    });",
+									"    pm.test(\"Email sent status\", function () {",
+									"        pm.expect(jsonData.email_sent).to.exist;",
+									"    });",
+									"    pm.environment.set(\"test_email\", \"test@example.com\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\",\n    \"full_name\": \"Test User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Create a new user account. User must verify email before signing in. Sends verification email automatically."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"Email verified successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"verified successfully\");",
+									"    });",
+									"    pm.test(\"Access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"User is verified\", function () {",
+									"        pm.expect(jsonData.user.is_verified).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{verification_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/verify-email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify email address using token from verification email. Returns access tokens for immediate login."
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Verification Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verification email sent\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"sent successfully\");",
+									"    pm.expect(jsonData.email_sent).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{test_email}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/resend-verification",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"resend-verification"
+							]
+						},
+						"description": "Resend verification email to unverified user account."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"Access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"Refresh token received\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"    pm.test(\"Token type is bearer\", function () {",
+									"        pm.expect(jsonData.token_type).to.eql(\"bearer\");",
+									"    });",
+									"} else if (responseCode.code === 403) {",
+									"    pm.test(\"Email verification required\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Email not verified\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Sign in with email and password. Requires verified email address. Returns access token (30 min) and refresh token (7 days)."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign In (Unverified - Error Test)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Email verification required message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"Email not verified\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"unverified@example.com\",\n    \"password\": \"testpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Test signing in with unverified email - should return 403 error."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.test(\"New access token received\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    pm.test(\"New refresh token received\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Get new access and refresh tokens using current refresh token."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User data is returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.email).to.exist;",
+									"    pm.expect(jsonData.full_name).to.exist;",
+									"    pm.expect(jsonData.is_verified).to.exist;",
+									"});",
+									"",
+									"pm.test(\"User is verified\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_verified).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get current user information using access token."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign Out",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signout"
+							]
+						},
+						"description": "Sign out from current device. Invalidates both access and refresh tokens."
+					},
+					"response": []
+				},
+				{
+					"name": "Sign Out All",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/signout-all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signout-all"
+							]
+						},
+						"description": "Sign out from all devices. Invalidates all refresh tokens for the user."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route Test",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access with access token."
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"    pm.test(\"Email sent status exists\", function () {",
+									"        pm.expect(jsonData.email_sent).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Request password reset for a user account. Sends reset email if user exists and is verified. Rate limited to 3 requests per hour."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Password reset successful\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"successfully\");",
+									"    });",
+									"} else if (responseCode.code === 400) {",
+									"    pm.test(\"Invalid token error\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Invalid\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"reset_token_here\",\n    \"new_password\": \"newSecurePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Reset password using a valid reset token. All existing sessions are invalidated. Password must be at least 8 characters."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Reset Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Valid field exists\", function () {",
+									"        pm.expect(jsonData.valid).to.exist;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/validate-reset-token?token=reset_token_here",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"validate-reset-token"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "reset_token_here",
+									"description": "Password reset token to validate"
+								}
+							]
+						},
+						"description": "Validate a password reset token without resetting the password. Useful for frontend validation before showing reset form."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Get All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Success is true\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Users array exists\", function () {",
+									"        pm.expect(jsonData.users).to.be.an('array');",
+									"    });",
+									"    pm.test(\"Pagination info exists\", function () {",
+									"        pm.expect(jsonData.pagination).to.exist;",
+									"        pm.expect(jsonData.pagination.total_users).to.be.a('number');",
+									"    });",
+									"    if (jsonData.users.length > 0) {",
+									"        pm.test(\"User has required fields\", function () {",
+									"            var user = jsonData.users[0];",
+									"            pm.expect(user.id).to.exist;",
+									"            pm.expect(user.email).to.exist;",
+									"            pm.expect(user.full_name).to.exist;",
+									"            pm.expect(user.usage_info).to.exist;",
+									"        });",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: Admin JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/admin/users?limit=50&skip=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of users to return (default: 100, max: 500)"
+								},
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of users to skip for pagination (default: 0)"
+								}
+							]
+						},
+						"description": "Admin endpoint to get all users with comprehensive information including subscription details, usage statistics, and account status."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Search Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Search applied flag is true\", function () {",
+									"        pm.expect(jsonData.search_applied).to.be.true;",
+									"    });",
+									"    pm.test(\"Users array exists\", function () {",
+									"        pm.expect(jsonData.users).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: Admin JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/admin/users?search=test&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "test",
+									"description": "Search users by email or full_name (case-insensitive)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Maximum number of users to return"
+								}
+							]
+						},
+						"description": "Admin endpoint to search users by email or full name."
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"    pm.test(\"Email sent status exists\", function () {",
+									"        pm.expect(jsonData.email_sent).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Request password reset for a user account. Sends reset email if user exists and is verified."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Password reset successful\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"successfully\");",
+									"    });",
+									"} else if (responseCode.code === 400) {",
+									"    pm.test(\"Invalid token error\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Invalid\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"reset_token_here\",\n    \"new_password\": \"newSecurePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Reset password using a valid reset token. All existing sessions are invalidated."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Reset Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Valid field exists\", function () {",
+									"        pm.expect(jsonData.valid).to.exist;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/validate-reset-token?token=reset_token_here",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"validate-reset-token"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "reset_token_here",
+									"description": "Password reset token to validate"
+								}
+							]
+						},
+						"description": "Validate a password reset token without resetting the password. Useful for frontend validation."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "API Key Management",
+			"description": "API key management for external integrations with rate limiting and usage tracking",
+			"item": [
+				{
+					"name": "Create API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"api_key\", jsonData.api_key);",
+									"    pm.test(\"API key created successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"created successfully\");",
+									"    });",
+									"    pm.test(\"API key exists\", function () {",
+									"        pm.expect(jsonData.api_key).to.exist;",
+									"    });",
+									"    pm.test(\"Key ID exists\", function () {",
+									"        pm.expect(jsonData.key_id).to.exist;",
+									"    });",
+									"    pm.test(\"Permissions exist\", function () {",
+									"        pm.expect(jsonData.permissions).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key_name\": \"My Integration API Key\",\n    \"permissions\": {\n        \"interpret\": true,\n        \"async_interpret\": true,\n        \"read_only\": false\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api-keys/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"create"
+							]
+						},
+						"description": "Create a new API key for external integrations. Returns the API key (store securely) and key ID."
+					},
+					"response": []
+				},
+				{
+					"name": "List API Keys",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"API keys array exists\", function () {",
+									"        pm.expect(jsonData).to.be.an('array');",
+									"    });",
+									"    pm.test(\"At least one key has required fields\", function () {",
+									"        if (jsonData.length > 0) {",
+									"            pm.expect(jsonData[0].id).to.exist;",
+									"            pm.expect(jsonData[0].key_name).to.exist;",
+									"            pm.expect(jsonData[0].permissions).to.exist;",
+									"        }",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"list"
+							]
+						},
+						"description": "List all API keys for the authenticated user. Does not return the actual API key values for security."
+					},
+					"response": []
+				},
+				{
+					"name": "Get API Key Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Key ID exists\", function () {",
+									"        pm.expect(jsonData._id).to.exist;",
+									"    });",
+									"    pm.test(\"Key name exists\", function () {",
+									"        pm.expect(jsonData.key_name).to.exist;",
+									"    });",
+									"    pm.test(\"Permissions exist\", function () {",
+									"        pm.expect(jsonData.permissions).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/{{key_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"{{key_id}}"
+							]
+						},
+						"description": "Get detailed information about a specific API key including usage statistics."
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"API key revoked successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"revoked successfully\");",
+									"    });",
+									"    pm.test(\"Status is revoked\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"revoked\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/{{key_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"{{key_id}}"
+							]
+						},
+						"description": "Revoke an API key. The key will no longer be valid for authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Test API Key Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"API key authentication successful\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"authenticated\");",
+									"    });",
+									"    pm.test(\"User info exists\", function () {",
+									"        pm.expect(jsonData.user).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Key",
+								"value": "{{api_key}}",
+								"description": "API key for authentication"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/auth/test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"auth",
+								"test"
+							]
+						},
+						"description": "Test API key authentication by accessing a protected endpoint."
+					},
+					"response": []
+				},
+				{
+					"name": "Get API Key Usage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Success is true\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Usage data exists\", function () {",
+									"        pm.expect(jsonData.usage).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/{{key_id}}/usage?days=30",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"{{key_id}}",
+								"usage"
+							],
+							"query": [
+								{
+									"key": "days",
+									"value": "30",
+									"description": "Number of days to look back (default: 30, max: 90)"
+								}
+							]
+						},
+						"description": "Get usage statistics for a specific API key."
+					},
+					"response": []
+				},
+				{
+					"name": "Get API Keys Usage Summary",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Success is true\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Summary exists\", function () {",
+									"        pm.expect(jsonData.summary).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api-keys/usage/summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api-keys",
+								"usage",
+								"summary"
+							]
+						},
+						"description": "Get usage summary for all API keys of the authenticated user."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Document Interpretation",
+			"description": "Enhanced document processing with PDF, DOCX, and image support",
+			"item": [
+				{
+					"name": "Interpret Mixed Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has processing stats\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.processing_stats).to.exist;",
+									"    pm.expect(jsonData.context_info).to.exist;",
+									"    pm.expect(jsonData.total_documents_processed).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Interpretation result exists\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.interpretation).to.exist;",
+									"    pm.expect(jsonData.interpretation.summary).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Optional: Add if endpoint is protected"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload PDF files (medical reports)"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload DOCX files (medical notes)"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload image files (lab results, scans)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text",
+									"description": "English or French"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text",
+									"description": "Primary School, High School, College, Graduate, Postgraduate, Not listed"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text",
+									"description": "Medical Science, Other Science, Non-Science"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process multiple document types (PDF, DOCX, images) for medical interpretation. Supports up to 20 files with intelligent context management."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret PDF Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload PDF medical reports"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Graduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process PDF files using Claude AI for medical interpretation."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret Images Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload medical images (JPG, PNG, etc.)"
+								},
+								{
+									"key": "language",
+									"value": "French",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "High School",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process image files using Mistral OCR and Claude AI for interpretation."
+					},
+					"response": []
+				},
+				{
+					"name": "Interpret DOCX Only",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload DOCX medical documents"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Primary School",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Process DOCX files using Groq AI for interpretation."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Generations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User ID exists\", function () {",
+									"        pm.expect(jsonData.user_id).to.exist;",
+									"    });",
+									"    pm.test(\"Generations array exists\", function () {",
+									"        pm.expect(jsonData.generations).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/labs/generations/{{user_id}}?limit=50",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"generations",
+								"{{user_id}}"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of generations to return"
+								}
+							]
+						},
+						"description": "Get user's generation history from MongoDB."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User ID exists\", function () {",
+									"        pm.expect(jsonData.user_id).to.exist;",
+									"    });",
+									"    pm.test(\"Statistics exist\", function () {",
+									"        pm.expect(jsonData.statistics).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/labs/stats/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"stats",
+								"{{user_id}}"
+							]
+						},
+						"description": "Get user's generation statistics from MongoDB."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "API Health & Testing",
+			"description": "Comprehensive API health checks and testing endpoints",
+			"item": [
+				{
+					"name": "Root Endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"API is running\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"running\");",
+									"    });",
+									"    pm.test(\"Version exists\", function () {",
+									"        pm.expect(jsonData.version).to.exist;",
+									"    });",
+									"    pm.test(\"Services status exists\", function () {",
+									"        pm.expect(jsonData.services).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Test basic API connectivity and get service status."
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Health status exists\", function () {",
+									"        pm.expect(jsonData.status).to.exist;",
+									"    });",
+									"    pm.test(\"Services health exists\", function () {",
+									"        pm.expect(jsonData.services).to.exist;",
+									"    });",
+									"    pm.test(\"MongoDB status\", function () {",
+									"        pm.expect(jsonData.services.mongodb).to.exist;",
+									"    });",
+									"    pm.test(\"Redis status\", function () {",
+									"        pm.expect(jsonData.services.redis).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Comprehensive health check for all services (MongoDB, Redis, Job Service)."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Redis",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Redis is working\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"success\");",
+									"    });",
+									"    pm.test(\"Test operation successful\", function () {",
+									"        pm.expect(jsonData.test_operation).to.eql(\"read_write_delete\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-redis",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-redis"
+							]
+						},
+						"description": "Test Redis connectivity and basic operations (read/write/delete)."
+					},
+					"response": []
+				},
+				{
+					"name": "Test CORS",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"CORS is working\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"CORS is working\");",
+									"    });",
+									"    pm.test(\"Allowed origins exist\", function () {",
+									"        pm.expect(jsonData.allowed_origins).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-cors",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-cors"
+							]
+						},
+						"description": "Test CORS configuration and allowed origins."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Async Job Service",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Service is active\", function () {",
+									"        pm.expect(jsonData.service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"Job ID exists\", function () {",
+									"        pm.expect(jsonData.test_job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Email service enabled\", function () {",
+									"        pm.expect(jsonData.email_service_enabled).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-async-job-service",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-async-job-service"
+							]
+						},
+						"description": "Test async job service health and functionality."
+					},
+					"response": []
+				},
+				{
+					"name": "Test PDF Generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"PDF service is active\", function () {",
+									"        pm.expect(jsonData.pdf_service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"PDF generated successfully\", function () {",
+									"        pm.expect(jsonData.pdf_size_bytes).to.be.above(0);",
+									"    });",
+									"    pm.test(\"Logo is available\", function () {",
+									"        pm.expect(jsonData.logo_available).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-pdf-generation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-pdf-generation"
+							]
+						},
+						"description": "Test PDF generation service with logo embedding and report formatting."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Async Document Interpretation",
+			"description": "Asynchronous document interpretation with background processing, email notifications, and job tracking",
+			"item": [
+				{
+					"name": "Start Async Interpretation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"job_id\", jsonData.job_id);",
+									"    pm.test(\"Job started successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"started successfully\");",
+									"    });",
+									"    pm.test(\"Job ID received\", function () {",
+									"        pm.expect(jsonData.job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Status is processing\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"processing\");",
+									"    });",
+									"    pm.test(\"Email notification info\", function () {",
+									"        pm.expect(jsonData.notification.email).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload medical documents (PDF, DOCX, images)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text",
+									"description": "English or French"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text",
+									"description": "General, Primary School, High School, College, Graduate, Postgraduate"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text",
+									"description": "Basic, Medical Science, Other Science, Non-Science"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret"
+							]
+						},
+						"description": "Start asynchronous medical interpretation job. Returns immediately with job ID. User receives email notification when complete."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Job ID matches\", function () {",
+									"        pm.expect(jsonData.job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Status is valid\", function () {",
+									"        pm.expect(jsonData.status).to.be.oneOf([\"pending\", \"processing\", \"completed\", \"failed\", \"cancelled\"]);",
+									"    });",
+									"    pm.test(\"Progress exists\", function () {",
+									"        pm.expect(jsonData.progress).to.be.a('number');",
+									"    });",
+									"    if (jsonData.status === \"completed\") {",
+									"        pm.test(\"Result exists for completed job\", function () {",
+									"            pm.expect(jsonData.result).to.exist;",
+									"            pm.expect(jsonData.result.interpretation).to.exist;",
+									"        });",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret/{{job_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret",
+								"{{job_id}}"
+							]
+						},
+						"description": "Get status and results of an interpretation job. Returns current status and full results if completed."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Jobs History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User ID exists\", function () {",
+									"        pm.expect(jsonData.user_id).to.exist;",
+									"    });",
+									"    pm.test(\"Jobs array exists\", function () {",
+									"        pm.expect(jsonData.jobs).to.be.an('array');",
+									"    });",
+									"    pm.test(\"Total jobs count\", function () {",
+									"        pm.expect(jsonData.total_jobs).to.be.a('number');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/jobs?limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"jobs"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Maximum number of jobs to return (default: 20, max: 100)"
+								}
+							]
+						},
+						"description": "Get user's interpretation job history, sorted by creation date (newest first)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Statistics exist\", function () {",
+									"        pm.expect(jsonData.statistics).to.exist;",
+									"    });",
+									"    pm.test(\"Success rate exists\", function () {",
+									"        pm.expect(jsonData.statistics.success_rate).to.be.a('number');",
+									"    });",
+									"    pm.test(\"Total jobs count\", function () {",
+									"        pm.expect(jsonData.statistics.total_jobs).to.be.a('number');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/jobs/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"jobs",
+								"status"
+							]
+						},
+						"description": "Get summary statistics about user's interpretation jobs including success rate and recent activity."
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Job",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Job cancelled successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"cancelled successfully\");",
+									"    });",
+									"    pm.test(\"Status is cancelled\", function () {",
+									"        pm.expect(jsonData.status).to.eql(\"cancelled\");",
+									"    });",
+									"} else if (responseCode.code === 400) {",
+									"    pm.test(\"Cannot cancel processing job\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Cannot cancel\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/async-labs/interpret/{{job_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"async-labs",
+								"interpret",
+								"{{job_id}}"
+							]
+						},
+						"description": "Cancel a pending interpretation job. Only pending jobs can be cancelled."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Billing & Subscriptions",
+			"description": "Subscription management and billing endpoints",
+			"item": [
+				{
+					"name": "Get User Subscription",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Subscription exists\", function () {",
+									"        pm.expect(jsonData.subscription).to.exist;",
+									"    });",
+									"    pm.test(\"Plan exists\", function () {",
+									"        pm.expect(jsonData.subscription.plan).to.exist;",
+									"    });",
+									"    pm.test(\"Usage exists\", function () {",
+									"        pm.expect(jsonData.subscription.usage).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/billing/subscription",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"subscription"
+							]
+						},
+						"description": "Get current user's subscription details and usage statistics."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Subscription Plans",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Plans array exists\", function () {",
+									"        pm.expect(jsonData.plans).to.be.an('array');",
+									"    });",
+									"    pm.test(\"At least one plan exists\", function () {",
+									"        pm.expect(jsonData.plans.length).to.be.above(0);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/billing/plans",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"plans"
+							]
+						},
+						"description": "Get available subscription plans and their features."
+					},
+					"response": []
+				},
+				{
+					"name": "Upgrade Subscription",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Upgrade successful\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"} else if (responseCode.code === 400) {",
+									"    pm.test(\"Invalid tier error\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"Invalid subscription tier\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tier\": \"pro\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/billing/upgrade",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"upgrade"
+							]
+						},
+						"description": "Upgrade user's subscription tier."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Job Limits",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Can create job exists\", function () {",
+									"        pm.expect(jsonData.can_create_job).to.exist;",
+									"    });",
+									"    pm.test(\"Reason exists\", function () {",
+									"        pm.expect(jsonData.reason).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/billing/check-limits/5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"check-limits",
+								"5"
+							]
+						},
+						"description": "Check if user can create a job with specified number of files."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Update User Tier",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"User tier updated successfully\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Message exists\", function () {",
+									"        pm.expect(jsonData.message).to.exist;",
+									"    });",
+									"} else if (responseCode.code === 404) {",
+									"    pm.test(\"User not found error\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.detail).to.include(\"User not found\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: Admin JWT access token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_email\": \"user@example.com\",\n    \"tier\": \"pro\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/billing/admin/update-user-tier",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"admin",
+								"update-user-tier"
+							]
+						},
+						"description": "Admin endpoint to update a user's subscription tier."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Get Usage Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Success is true\", function () {",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"    pm.test(\"Statistics exist\", function () {",
+									"        pm.expect(jsonData.statistics).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required: Admin JWT access token"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/billing/admin/usage-stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"billing",
+								"admin",
+								"usage-stats"
+							]
+						},
+						"description": "Admin endpoint to get usage statistics across all users."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Testing",
+			"description": "Comprehensive error handling tests",
+			"item": [
+				{
+					"name": "Auth - Invalid Credentials",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"wrong@example.com\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						},
+						"description": "Test error handling for invalid login credentials."
+					},
+					"response": []
+				},
+				{
+					"name": "Auth - Duplicate Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpassword123\",\n    \"full_name\": \"Duplicate User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Test error handling for duplicate email registration."
+					},
+					"response": []
+				},
+				{
+					"name": "Auth - Invalid Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"invalid_refresh_token_here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Test error handling for invalid refresh token."
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset - Invalid Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Generic message for security\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"If the email address exists\");",
+									"    pm.expect(jsonData.email_sent).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"nonexistent@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Test password reset with non-existent email. Should return generic message for security."
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset - Unverified Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email verification required message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"verify your email\");",
+									"    pm.expect(jsonData.email_sent).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"unverified@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Test password reset with unverified email. Should require email verification first."
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset - Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Invalid token error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"Invalid\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"invalid_token_here\",\n    \"new_password\": \"newSecurePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Test password reset with invalid token. Should return 400 error."
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset - Weak Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Password validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"8 characters\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"valid_token_here\",\n    \"new_password\": \"123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Test password reset with weak password (less than 8 characters). Should return 400 error."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route - No Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access without token."
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Route - Invalid Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token_here"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/protected",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"protected"
+							]
+						},
+						"description": "Test protected route access with invalid token."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - No Files",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test document interpretation without files."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - Too Many Files",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Add 21+ files to test limit"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Other Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test file limit (max 20 files)."
+					},
+					"response": []
+				},
+				{
+					"name": "Document - Unsupported File Type",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload .txt, .mp4, or other unsupported files"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Non-Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test unsupported file type handling."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stress Testing",
+			"description": "Test system limits and performance",
+			"item": [
+				{
+					"name": "Large File Processing",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload files close to size limits (PDF: 25MB, DOCX: 15MB, Images: 10MB)"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Graduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test processing of files near size limits."
+					},
+					"response": []
+				},
+				{
+					"name": "Maximum Files (20)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload exactly 20 files of mixed types"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "College",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Other Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test maximum file limit (20 files)."
+					},
+					"response": []
+				},
+				{
+					"name": "Context Limit Test",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Upload very large text-heavy documents to test context truncation"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "education_level",
+									"value": "Postgraduate",
+									"type": "text"
+								},
+								{
+									"key": "technical_level",
+									"value": "Medical Science",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/labs/interpret",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"labs",
+								"interpret"
+							]
+						},
+						"description": "Test context limit handling and smart truncation."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Async Job Service",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Service is active\", function () {",
+									"        pm.expect(jsonData.service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"Job ID exists\", function () {",
+									"        pm.expect(jsonData.test_job_id).to.exist;",
+									"    });",
+									"    pm.test(\"Email service enabled\", function () {",
+									"        pm.expect(jsonData.email_service_enabled).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-async-job-service",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-async-job-service"
+							]
+						},
+						"description": "Test async job service health and functionality."
+					},
+					"response": []
+				},
+				{
+					"name": "Test PDF Generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (responseCode.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"PDF service is active\", function () {",
+									"        pm.expect(jsonData.pdf_service_active).to.be.true;",
+									"    });",
+									"    pm.test(\"PDF generated successfully\", function () {",
+									"        pm.expect(jsonData.pdf_size_bytes).to.be.above(0);",
+									"    });",
+									"    pm.test(\"Logo is available\", function () {",
+									"        pm.expect(jsonData.logo_available).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-pdf-generation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-pdf-generation"
+							]
+						},
+						"description": "Test PDF generation service with logo embedding and report formatting."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set timestamp for requests",
+					"pm.globals.set(\"timestamp\", new Date().toISOString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test to log response time",
+					"pm.test(\"Response time is reasonable\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(30000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string",
+			"description": "JWT access token (auto-populated)"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string",
+			"description": "Refresh token (auto-populated)"
+		},
+		{
+			"key": "api_key",
+			"value": "",
+			"type": "string",
+			"description": "API key for external integrations (auto-populated)"
+		},
+		{
+			"key": "key_id",
+			"value": "",
+			"type": "string",
+			"description": "API key ID for management operations (auto-populated)"
+		},
+		{
+			"key": "job_id",
+			"value": "",
+			"type": "string",
+			"description": "Async job ID for tracking (auto-populated)"
+		}
+	]
+} 

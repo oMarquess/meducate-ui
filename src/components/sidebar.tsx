@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 // import {MobileSidebar} from "./mobile-sidebar";
 
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, StethoscopeIcon, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, StethoscopeIcon, Menu, X, ChevronLeft, ChevronRight, Key, BookOpen, BarChart3 } from "lucide-react";
 import { FreeCounter } from "./free-counter";
 
 const montserrat = Montserrat({ weight: "600", subsets: ["latin"] });
@@ -26,6 +26,24 @@ const routes = [
         icon: StethoscopeIcon,
         href: "/labs",
         color: "text-violet-500",
+    },
+    {
+        label: "API Keys",
+        icon: Key,
+        href: "/api-keys",
+        color: "text-orange-500",
+    },
+    {
+        label: "API Docs",
+        icon: BookOpen,
+        href: "/api-docs",
+        color: "text-blue-500",
+    },
+    {
+        label: "Usage",
+        icon: BarChart3,
+        href: "/usage",
+        color: "text-green-500",
     },
 ];
 
