@@ -32,8 +32,8 @@ const DashboardLayout = ({
                     isPro={false}  // Set to false by default since we're not using subscription
                 />
                 
-                {/* Main Content - Uses CSS to adapt to sidebar width */}
-                <main className="md:ml-64 transition-all duration-300 ease-in-out">
+                {/* Main Content - Light gray background extended to cover navbar */}
+                <main className="md:ml-64 transition-all duration-300 ease-in-out bg-gray-50 min-h-screen">
                     <Navbar />
                     {children}
                 </main>
