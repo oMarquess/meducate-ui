@@ -1,5 +1,5 @@
 // Production Backend Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://meducate-4b014c640ca1.herokuapp.com';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://meducate-3dnnwposhq-uc.a.run.app/';
 
 // Specific endpoints
 export const API_ENDPOINT = `${API_BASE_URL}/labs/interpret`;
@@ -7,10 +7,12 @@ export const API_ENDPOINT = `${API_BASE_URL}/labs/interpret`;
 // Other configuration constants
 export const APP_CONFIG = {
   production: {
-    baseURL: 'https://meducate-4b014c640ca1.herokuapp.com',
+    // baseURL: 'https://meducate-4b014c640ca1.herokuapp.com',
+    baseURL: 'https://meducate-3dnnwposhq-uc.a.run.app/',
   },
   development: {
-    baseURL: 'http://localhost:8000',
+    // baseURL: 'http://localhost:8000',
+    baseURL: 'https://meducate-3dnnwposhq-uc.a.run.app/'
   }
 };
 

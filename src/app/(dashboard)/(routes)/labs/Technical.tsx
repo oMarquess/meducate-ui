@@ -4,6 +4,7 @@ import { useFormState } from "./FormContext";
 import { useState, useEffect } from "react";
 import { ProgressBar } from './ProgressBar';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 import {
     Accordion,
     AccordionContent,
@@ -489,6 +490,7 @@ function InterpretationResult({ response }: { response: InterpretationResponse }
 
 export function TechnicalForm() {
     const router = useRouter();
+    const { user } = useAuth();
     const [isCreated, setCreated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -534,7 +536,9 @@ export function TechnicalForm() {
                     setPollingInterval(null);
                 }
                 
-                await increaseApiLimit();
+                if (user?.id) {
+                    await increaseApiLimit(user.id);
+                }
                 
             } else if (jobResult.status === 'failed') {
                 // Job failed
