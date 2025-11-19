@@ -337,7 +337,7 @@ export default function UsagePage() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
-                        <h4 className="font-semibold mb-3">Today's Usage</h4>
+                        <h4 className="font-semibold mb-3">Today&apos;s Usage</h4>
                         <div className="space-y-3">
                           <div>
                             <div className="flex justify-between text-sm">

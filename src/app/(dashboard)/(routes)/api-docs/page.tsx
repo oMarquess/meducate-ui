@@ -634,7 +634,7 @@ export default function ApiDocsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">API Documentation</h1>
           <p className="text-gray-600 mt-2">
-            Integrate Meducate's lab interpretation capabilities into your applications
+            Integrate Meducate&apos;s lab interpretation capabilities into your applications
           </p>
         </div>
         <Button 
@@ -725,7 +725,7 @@ export default function ApiDocsPage() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Don't have an API key?{' '}
+                  Don&apos;t have an API key?{' '}
                   <button
                     onClick={() => window.open('/api-keys', '_blank')}
                     className="text-blue-600 hover:underline"

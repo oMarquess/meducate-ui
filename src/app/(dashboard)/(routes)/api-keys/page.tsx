@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Plus, Eye, EyeOff, Copy, Trash2, Clock, Activity } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiKeysAPI } from '@/lib/api-keys';
 
 interface ApiKey {
   id: string;

@@ -37,7 +37,7 @@ const DashboardLayout = ({
             console.warn('⚠️ Dashboard: No user ID available, setting count to 0');
             setApiLimitCount(0);
         }
-    }, [user?.id]);
+    }, [user]);
 
     // Fetch actual API limit count on mount and user change
     useEffect(() => {

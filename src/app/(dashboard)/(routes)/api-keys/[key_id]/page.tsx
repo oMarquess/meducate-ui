@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -28,14 +28,7 @@ export default function ApiKeyDetailsPage() {
 
   const keyId = params.key_id as string;
 
-  useEffect(() => {
-    if (!authLoading && isSignedIn && keyId) {
-      fetchKeyDetails();
-      fetchKeyUsage();
-    }
-  }, [authLoading, isSignedIn, keyId]);
-
-  const fetchKeyDetails = async () => {
+  const fetchKeyDetails = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await apiKeysAPI.getKeyDetails(keyId);
@@ -46,16 +39,23 @@ export default function ApiKeyDetailsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [keyId]);
 
-  const fetchKeyUsage = async () => {
+  const fetchKeyUsage = useCallback(async () => {
     try {
       const response = await apiKeysAPI.getKeyUsage(keyId);
       setUsage(response);
     } catch (err: any) {
       console.error('Error fetching key usage:', err);
     }
-  };
+  }, [keyId]);
+
+  useEffect(() => {
+    if (!authLoading && isSignedIn && keyId) {
+      fetchKeyDetails();
+      fetchKeyUsage();
+    }
+  }, [authLoading, isSignedIn, keyId, fetchKeyDetails, fetchKeyUsage]);
 
   const revokeKey = async () => {
     if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone and will immediately invalidate the key.')) {
