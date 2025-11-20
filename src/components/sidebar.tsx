@@ -62,29 +62,32 @@ const navigationGroups = [
   {
     label: "Developer",
     items: [
-      {
-        label: "API Keys",
-        icon: Key,
-        href: "/api-keys",
-        color: "text-orange-500",
-      },
-      {
-        label: "Documentation",
-        icon: BookOpen,
-        href: "/api-docs",
-        color: "text-green-500",
-      }
+      // API Keys - Coming Soon
+      // {
+      //   label: "API Keys",
+      //   icon: Key,
+      //   href: "/api-keys",
+      //   color: "text-orange-500",
+      // },
+      // Documentation - Coming Soon
+      // {
+      //   label: "Documentation",
+      //   icon: BookOpen,
+      //   href: "/api-docs",
+      //   color: "text-green-500",
+      // }
     ]
   },
   {
     label: "Account",
     items: [
-      {
-        label: "Usage",
-        icon: BarChart3,
-        href: "/usage",
-        color: "text-emerald-500",
-      },
+      // Usage - Coming Soon
+      // {
+      //   label: "Usage",
+      //   icon: BarChart3,
+      //   href: "/usage",
+      //   color: "text-emerald-500",
+      // },
       {
         label: "Billing",
         icon: CreditCard,

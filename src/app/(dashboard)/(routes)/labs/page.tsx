@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { interpretationAPI, SubscriptionError } from '@/lib/interpretation';
@@ -109,6 +109,9 @@ const LabsPage: React.FC = () => {
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
     const [subscriptionError, setSubscriptionError] = useState<SubscriptionError | null>(null);
 
+    // Add a ref to track if API limit was already increased for this job
+    const apiLimitIncreasedRef = useRef<string | null>(null);
+
     // Reset state when component mounts (for fresh starts)
     useEffect(() => {
         return () => {
@@ -215,6 +218,7 @@ const LabsPage: React.FC = () => {
             clearInterval(pollingInterval);
             setPollingInterval(null);
         }
+        apiLimitIncreasedRef.current = null;
     };
 
     // Cleanup polling on unmount
@@ -236,30 +240,32 @@ const LabsPage: React.FC = () => {
             setProgress(jobResult.progress);
             
             if (jobResult.status === 'completed' && jobResult.result) {
+                // Clear polling IMMEDIATELY to prevent race conditions
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+                // Only increase API limit once per job
+                if (user?.id && apiLimitIncreasedRef.current !== jobId) {
+                    apiLimitIncreasedRef.current = jobId;
+                    await increaseApiLimit(user.id);
+                }
+                
                 // Job completed successfully
                 setResult(jobResult.result);
                 setIsLoading(false);
                 
-                // Clear polling
+            } else if (jobResult.status === 'failed') {
+                // Clear polling IMMEDIATELY
                 if (pollingInterval) {
                     clearInterval(pollingInterval);
                     setPollingInterval(null);
                 }
                 
-                if (user?.id) {
-                    await increaseApiLimit(user.id);
-                }
-                
-            } else if (jobResult.status === 'failed') {
                 // Job failed
                 setError(jobResult.error || 'Interpretation job failed. Please try again.');
                 setIsLoading(false);
-                
-                // Clear polling
-                if (pollingInterval) {
-                    clearInterval(pollingInterval);
-                    setPollingInterval(null);
-                }
                 
             } else if (jobResult.status === 'processing') {
                 // Update progress for processing jobs
@@ -862,7 +868,7 @@ const LabsPage: React.FC = () => {
                     
                     {jobId && (
                         <div className="mb-4">
-                            <p className="text-sm text-gray-600 mb-2">Job ID: {jobId}</p>
+                            {/* <p className="text-sm text-gray-600 mb-2">Job ID: {jobId}</p> */}
                             <p className="text-sm text-gray-600">
                                 {jobStatus === 'pending' && 'Your request is in the queue and will start processing shortly.'}
                                 {jobStatus === 'processing' && `Processing your files... ${progress}% complete`}
@@ -885,7 +891,7 @@ const LabsPage: React.FC = () => {
                     <p className="text-xs text-gray-500">Progress: {progress}%</p>
                     
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-blue-800 font-medium">🔄 Background Processing</p>
+                        <p className="text-blue-800 font-medium">Processing...</p>
                         <p className="text-blue-700 text-sm mt-1">
                             Your medical reports are being processed in the background. 
                                                          You&apos;ll receive an email notification when complete.

@@ -1,7 +1,7 @@
 "use client";
 import { useForm } from "react-hook-form"
 import { useFormState } from "./FormContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ProgressBar } from './ProgressBar';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -501,6 +501,9 @@ export function TechnicalForm() {
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
     const [subscriptionError, setSubscriptionError] = useState<SubscriptionError | null>(null);
     
+    // Add a ref to track if API limit was already increased for this job
+    const apiLimitIncreasedRef = useRef<string | null>(null);
+    
     const { onHandleBack, setFormData, formData } = useFormState();
     const { register, handleSubmit } = useForm<TFormValues>({
         defaultValues: formData
@@ -525,31 +528,33 @@ export function TechnicalForm() {
             setProgress(jobResult.progress);
             
             if (jobResult.status === 'completed' && jobResult.result) {
+                // Clear polling IMMEDIATELY to prevent race conditions
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                
+                // Only increase API limit once per job
+                if (user?.id && apiLimitIncreasedRef.current !== jobId) {
+                    apiLimitIncreasedRef.current = jobId;
+                    await increaseApiLimit(user.id);
+                }
+                
                 // Job completed successfully
                 setFormData((prevFormData) => ({ ...prevFormData, response: jobResult.result }));
                 setCreated(true);
                 setIsLoading(false);
                 
-                // Clear polling
+            } else if (jobResult.status === 'failed') {
+                // Clear polling IMMEDIATELY
                 if (pollingInterval) {
                     clearInterval(pollingInterval);
                     setPollingInterval(null);
                 }
                 
-                if (user?.id) {
-                    await increaseApiLimit(user.id);
-                }
-                
-            } else if (jobResult.status === 'failed') {
                 // Job failed
                 setError(jobResult.error || 'Interpretation job failed. Please try again.');
                 setIsLoading(false);
-                
-                // Clear polling
-                if (pollingInterval) {
-                    clearInterval(pollingInterval);
-                    setPollingInterval(null);
-                }
                 
             } else if (jobResult.status === 'processing') {
                 // Update progress for processing jobs
@@ -636,6 +641,7 @@ export function TechnicalForm() {
         setJobId(null);
         setJobStatus(null);
         setProgress(0);
+        apiLimitIncreasedRef.current = null;
 
         try {
             // Map education level values to API expected values if needed
@@ -787,7 +793,7 @@ export function TechnicalForm() {
                 
                 <div className="text-center space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-blue-800 font-medium">🔄 Background Processing</p>
+                        <p className="text-blue-800 font-medium">Processing...</p>
                         <p className="text-blue-700 text-sm mt-1">
                                                          Your medical reports are being processed in the background. 
                              You&apos;ll receive an email notification when complete.
@@ -799,7 +805,7 @@ export function TechnicalForm() {
                         )}
                     </div>
                     
-                    {jobId && jobStatus && ['pending', 'processing'].includes(jobStatus) && (
+                    {jobStatus && ['pending', 'processing'].includes(jobStatus) && (
                         <button
                             type="button"
                             onClick={cancelJob}
